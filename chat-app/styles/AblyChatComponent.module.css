@@ -1,0 +1,55 @@
+.chatHolder {
+  display: grid;
+  grid-template-rows: 1fr 100px;
+}
+
+.chatText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1em;
+  padding: 1em;
+  height: calc(100vh - 100px - 100px - 100px - 100px);
+  overflow-y: auto;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  border-top: 1px solid #eee;
+}
+
+.textarea {
+  resize: none;
+  padding: 1em;
+  border: 0;
+  font-family: -apple-system,BlinkMacSystemFont,Segoe UI,Roboto, Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue, sans-serif;
+  font-size: 1.2em;
+  background-color: lightgrey;
+}
+
+.button {
+  border: 0;
+  color: white;
+  font-weight: bold;
+  font-size: 1.4em;
+  background: linear-gradient(to right, #6e07f3, #5BE9B9);
+}
+
+.button:hover {
+  background: linear-gradient(90deg, #6e07f3 0%, #5BE9B9 62%, #5BE9B9 100%);
+}
+
+.button:disabled, 
+.button:hover:disabled {
+  background: linear-gradient(to right, #5BE9B9, #6e07f3);
+  opacity: 0.5;
+}
+
+.message {
+  background-color: lightgrey;
+  padding: 1em;
+  border-radius: 10px;
+  flex-grow: 0;
+  border-bottom-left-radius: 0;
+}
