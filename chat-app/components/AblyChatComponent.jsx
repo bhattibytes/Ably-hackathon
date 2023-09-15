@@ -55,7 +55,7 @@ const AblyChatComponent = () => {
         </div>
         <form onSubmit={handleFormSubmission} className={styles.form}>
           <Editor
-            apiKey='rhs24uxaf33ilb57ay29q85ihp0re5mside0imo026cg3lt0'
+            apiKey={process.env.TINY_MCE_API_KEY}
             init={{
               height: 150,
               placeholder: "Type your message here...",
