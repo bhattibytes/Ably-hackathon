@@ -1,6 +1,7 @@
 import Head from 'next/head'
 import dynamic from 'next/dynamic'
 import Footer from '../components/Footer.js';
+// import { AblyProvider } from '@ably-labs/react-hooks';
 
 const AblyChatComponent = dynamic(() => import('../components/AblyChatComponent'), { ssr: false });
 
@@ -14,7 +15,9 @@ export default function Home() {
 
       <main>
         <center><h1 className="title">Ably Chat App</h1></center>
-        <AblyChatComponent />
+        {/* <AblyProvider options={{ authUrl: "/api/createTokenRequest" }}> */}
+          <AblyChatComponent />
+        {/* </AblyProvider> */}
       </main>
 
       <Footer />

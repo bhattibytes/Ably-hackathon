@@ -11,7 +11,7 @@ const AblyChatComponent = () => {
   const [receivedMessages, setMessages] = useState([]);
 
   const [channel, ably] = useChannel("chat-app", (message) => {
-    const history = receivedMessages.slice(-199);
+    const history = receivedMessages;
     setMessages([...history, message]);
   });
 
@@ -25,7 +25,7 @@ const AblyChatComponent = () => {
     } else { 
     event.preventDefault();
     sendChatMessage(messageText);
-    let form = document.querySelector('form');
+    let form = document.querySelector('form#chat-form');
     form.reset();
     }
   }
@@ -53,7 +53,11 @@ const AblyChatComponent = () => {
           {messages}
           <div ref={(element) => { messageEnd = element; }}></div> 
         </div>
-        <form onSubmit={handleFormSubmission} className={styles.form}>
+        <form
+        id="chat-form" 
+        onSubmit={handleFormSubmission} 
+        className={styles.form}
+        >
           <Editor
             apiKey={process.env.TINY_MCE_API_KEY}
             init={{
@@ -61,14 +65,19 @@ const AblyChatComponent = () => {
               placeholder: "Type your message here...",
               menubar: false,
               plugins: [
-                'advlist autolink lists link image charmap print preview anchor',
-                'searchreplace visualblocks code fullscreen',
                 'emoticons',
-                'insertdatetime media table paste code help wordcount'
+                'insertdatetime',
+                'link',
+                'lists',
+                'table',
+                'image',
+                'imagetools',
+                'paste',
+                'code'
               ],
               toolbar:
                 'undo redo | formatselect | bold italic backcolor | \
-                removeformat | emoticons'
+                removeformat | link image | code | emoticons \ '
             }}
             onEditorChange={(content, editor) => setMessageText(content)}
           />
