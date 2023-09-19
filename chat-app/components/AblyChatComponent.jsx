@@ -15,6 +15,8 @@ const AblyChatComponent = () => {
     setMessages([...history, message]);
   });
 
+  const form = document.querySelector('form#chat-form');
+
   const sendChatMessage = (messageText) => {
     channel.publish({ name: "chat-message", data: messageText });
   }
@@ -25,13 +27,12 @@ const AblyChatComponent = () => {
     } else { 
     event.preventDefault();
     sendChatMessage(messageText);
-    let form = document.querySelector('form#chat-form');
     form.reset();
     }
   }
 
   const messages = receivedMessages.map((message, index) => {
-    const author = message.connectionId === ably.connection.id ? "me" : "other";
+    const author = message.connectionId === ably.connection.id ? "Me" : "Guest";
     let parsedMessage;
     try {
       parsedMessage = parse(message.data);
@@ -39,7 +40,12 @@ const AblyChatComponent = () => {
       console.log(error);
       parsedMessage = message.data;
     }
-    return <span key={index} className={styles.message} data-author={author}>{parsedMessage}</span>;
+    return (
+    <span key={index} style={{display: 'flex', flexDirection: 'row', alignItems: 'center'}}>
+      <span style={{fontWeight: 'bold'}}>{author}:&nbsp;</span>
+      <span className={styles.message} data-author={author}>{parsedMessage}</span>
+    </span>
+    )
   });
 
   useEffect(() => {
@@ -60,6 +66,13 @@ const AblyChatComponent = () => {
         >
           <Editor
             apiKey={process.env.TINY_MCE_API_KEY}
+            onKeyDown={(e) => {
+              if (e.key == "Enter") {
+                e.preventDefault();
+                sendChatMessage(messageText);
+                form.reset();
+              }
+            }}
             init={{
               height: 150,
               placeholder: "Type your message here...",
@@ -71,8 +84,6 @@ const AblyChatComponent = () => {
                 'lists',
                 'table',
                 'image',
-                'imagetools',
-                'paste',
                 'code'
               ],
               toolbar:
