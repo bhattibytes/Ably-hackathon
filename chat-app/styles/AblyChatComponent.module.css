@@ -1,7 +1,7 @@
 .chatHolder {
   display: grid;
   grid-template-rows: 1fr 100px;
-  border: 5px solid #eee;
+  border: 2px solid #eee;
   width: 1000px;
   height: 60vh;
 }
@@ -24,6 +24,7 @@
 
 .button {
   border: 0;
+  border-radius: 10px;
   color: white;
   font-weight: bold;
   font-size: 1.4em;
@@ -46,4 +47,10 @@
   border-radius: 10px;
   flex-grow: 0;
   border-bottom-left-radius: 0;
+}
+
+@media screen and (max-width: 1020px) {
+  .chatHolder {
+    width: 100%;
+  }
 }

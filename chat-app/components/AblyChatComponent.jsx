@@ -11,8 +11,7 @@ const AblyChatComponent = () => {
   const [receivedMessages, setMessages] = useState([]);
 
   const [channel, ably] = useChannel("chat-app", (message) => {
-    const history = receivedMessages;
-    setMessages([...history, message]);
+    setMessages((receivedMessages)=>[...receivedMessages, message]);
   });
 
   const form = document.querySelector('form#chat-form');
@@ -22,17 +21,17 @@ const AblyChatComponent = () => {
   }
   
   const handleFormSubmission = (event) => {
+    event.preventDefault();
     if (messageText === '') {
       alert("Please enter a message")
     } else { 
-    event.preventDefault();
-    sendChatMessage(messageText);
-    form.reset();
+      sendChatMessage(messageText);
+      form.reset();
     }
   }
 
   const messages = receivedMessages.map((message, index) => {
-    const author = message.connectionId === ably.connection.id ? "Me" : "Guest";
+    const author = message.connectionId === ably.connection.id ? "Me" : "Ghost";
     let parsedMessage;
     try {
       parsedMessage = parse(message.data);
@@ -74,7 +73,7 @@ const AblyChatComponent = () => {
               }
             }}
             init={{
-              height: 150,
+              height: 200,
               placeholder: "Type your message here...",
               menubar: false,
               plugins: [
@@ -88,7 +87,7 @@ const AblyChatComponent = () => {
               ],
               toolbar:
                 'undo redo | formatselect | bold italic backcolor | \
-                removeformat | link image | code | emoticons \ '
+                link | code | emoticons | removeformat \ '
             }}
             onEditorChange={(content, editor) => setMessageText(content)}
           />

@@ -7,16 +7,16 @@ export function useChannel(channelName, callbackOnMessage) {
   const channel = ably.channels.get(`[?rewind=2m&rewindLimit=10]${channelName}`);
   
   const onMount = () => {
-      channel.subscribe(msg => { callbackOnMessage(msg); });
+    channel.subscribe(msg => { callbackOnMessage(msg); });
   }
 
   const onUnmount = () => {
-      channel.unsubscribe();
+    channel.unsubscribe();
   }
 
   const useEffectHook = () => {
-      onMount();
-      return () => { onUnmount(); };
+    onMount();
+    return () => { onUnmount(); };
   };
 
   useEffect(useEffectHook);
