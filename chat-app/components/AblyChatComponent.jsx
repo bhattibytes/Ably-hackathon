@@ -21,7 +21,9 @@ const AblyChatComponent = () => {
   const input = document.querySelector('input#create-channel');
 
   const sendChatMessage = (messageText) => {
-    channel.publish({ name: channelName, data: messageText });
+    channel.publish({ 
+      name: channelName, data: `<strong>${messageText.slice(3, -4) + '</strong> <em>at</em> ' + '<em>'+ new Date().toLocaleString().split(',')[1]}</em>` 
+    });
   }
   
   const handleFormSubmission = (event) => {
@@ -61,7 +63,9 @@ const AblyChatComponent = () => {
       setChannelName(value);
       const newChannel = ably.channels.get(`[?rewind=2m&rewindLimit=10]${value}`);
       newChannel.attach();
-      newChannel.publish({ name: value, data: `A New Channel named "${value}" was created` });
+      newChannel.publish({ 
+        name: value, data: `A New Channel named <strong>"${value}"</strong> was created <em> at ${new Date().toLocaleString().split(',')[1]}</em>` 
+      });
       newChannel.once("attached", () => {
         newChannel.history((err, page) => {
           const messages = page.items.reverse();
@@ -83,7 +87,7 @@ const AblyChatComponent = () => {
     } else {
     const newChannel = ably.channels.get(`[?rewind=2m&rewindLimit=10]${newChannelName}`);
     newChannel.attach();
-    newChannel.publish({ name: newChannelName, data: `Switched to channel: "${newChannelName}"` });
+    newChannel.publish({ name: newChannelName, data: `Switched to channel: <strong>"${newChannelName}"</strong>` });
       newChannel.history((err, page) => {
         let messages = page.items.reverse();
         setMessages([...messages]);
