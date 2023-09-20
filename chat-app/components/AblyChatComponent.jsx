@@ -118,6 +118,13 @@ const AblyChatComponent = () => {
         placeholder="Enter Channel Name"
         value={value}
         onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key == "Enter") {
+            e.preventDefault();
+            createChannel();
+            setValue("");
+          }
+        }}
         />
         <button onClick={createChannel}>Create New Channel</button>
       </div>
