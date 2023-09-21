@@ -15,8 +15,8 @@ export default function Home() {
       </Head>
       
       <main className={styles.main}>
-        <Kanban />
         <AblyChatComponent />
+        <Kanban />
       </main>
 
       <Footer />

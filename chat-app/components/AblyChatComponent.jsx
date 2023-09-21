@@ -171,7 +171,7 @@ const AblyChatComponent = () => {
               ],
               toolbar:
                 'undo redo | formatselect | bold italic backcolor | \
-                link | code | emoticons | removeformat \ '
+                emoticons | link | code |  removeformat \ '
             }}
             onEditorChange={(content, editor) => setMessageText(content)}
           />
