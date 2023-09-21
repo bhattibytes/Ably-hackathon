@@ -1,3 +1,14 @@
+.main {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.kabanMain {
+  position: absolute;
+  left: 300px;
+}
+
 .container {
   position: absolute;
   bottom: 0;

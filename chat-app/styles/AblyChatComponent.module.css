@@ -6,6 +6,7 @@
 
 .channels {
   position: absolute;
+  left: 0;
   margin-left: 50px;
 }
 
@@ -18,11 +19,21 @@
   margin-bottom: 10px;
 }
 
+.chatCenter {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  right: 0;
+  margin-right: 60px;
+}
+
 .chatHolder {
   display: grid;
   grid-template-rows: 1fr 100px;
   border: 2px solid #eee;
-  width: 1000px;
+  width: 500px;
   height: 55vh;
 }
 

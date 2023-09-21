@@ -118,7 +118,7 @@ const AblyChatComponent = () => {
       </p>
       )}
       </h1>
-    <center>
+    <center className={styles.chatCenter}>
       <h1>"{channelName}"</h1>
       <div className={styles.createChannel}>
         <input 
