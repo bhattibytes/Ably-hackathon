@@ -11,7 +11,7 @@ const AblyChatComponent = () => {
   const [receivedMessages, setMessages] = useState([]);
   const [value, setValue] = useState("");
   const [channelName, setChannelName] = useState("home");
-  const [channels, setChannels] = useState(["home"]);
+  const [channels, setChannels] = useState(["announcements","home", "general", "random", "help"]);
 
   const [channel, ably] = useChannel(`${channelName}`, (message) => {
     setMessages((receivedMessages)=>[...receivedMessages, message]);
