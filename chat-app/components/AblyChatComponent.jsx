@@ -47,8 +47,17 @@ const AblyChatComponent = () => {
     }
     return (
     <span key={index} className={styles.messages}>
-      <span className={styles.author}>{author}:&nbsp;</span>
-      <span className={styles.message} data-author={author}>{parsedMessage}</span>
+      { author === "Ghost" ? 
+      <>
+        <span className={styles.message} data-author={author}>{parsedMessage}</span>
+        <span className={styles.author}>&nbsp;{author}</span>
+      </>
+      :
+      <>
+        <span className={styles.author}>{author}&nbsp;</span>
+        <span className={styles.messageMe} data-author={author}>{parsedMessage}</span>
+      </>
+    }
     </span>
     )
   });
@@ -104,7 +113,7 @@ const AblyChatComponent = () => {
       <h1 className={styles.channels}>
       <span className={styles.channelTitle}>Channels</span>
       {channels.map((channel, index) => 
-      <p className={styles.channelListItems} key={index} onClick={(e) =>switchChannel(e)}>
+      <p className={styles.channelListItems} key={index} onClick={(e) => switchChannel(e)}>
         {channel}
       </p>
       )}

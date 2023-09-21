@@ -23,7 +23,7 @@
   grid-template-rows: 1fr 100px;
   border: 2px solid #eee;
   width: 1000px;
-  height: 60vh;
+  height: 55vh;
 }
 
 .chatText {
@@ -52,6 +52,22 @@
   align-items: center;
 }
 
+.message {
+  background-color: lightgrey;
+  padding: 1em;
+  border-radius: 10px;
+  flex-grow: 0;
+  border-bottom-right-radius: 0;
+}
+
+.messageMe {
+  background-color: #5BE9B9;
+  padding: 1em;
+  border-radius: 10px;
+  flex-grow: 0;
+  border-bottom-left-radius: 0;
+}
+
 .button {
   border: 0;
   border-radius: 10px;
@@ -69,14 +85,6 @@
 .button:hover:disabled {
   background: linear-gradient(to right, #5BE9B9, #6e07f3);
   opacity: 0.5;
-}
-
-.message {
-  background-color: lightgrey;
-  padding: 1em;
-  border-radius: 10px;
-  flex-grow: 0;
-  border-bottom-left-radius: 0;
 }
 
 @media screen and (max-width: 1020px) {
