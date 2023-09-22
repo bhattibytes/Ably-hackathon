@@ -7,7 +7,7 @@ import styles from "../styles/Home.module.css";
 const getItems = (count, offset = 0) =>
   Array.from({ length: count }, (v, k) => k).map(k => ({
     id: `item-${k + offset}-${new Date().getTime()}`,
-    content: `item ${k + offset}`
+    content: `task ${k + offset}`
   }));
 
 const reorder = (list, startIndex, endIndex) => {
@@ -41,6 +41,7 @@ const getItemStyle = (isDragging, draggableStyle) => ({
   userSelect: "none",
   padding: grid * 2,
   margin: `0 0 ${grid}px 0`,
+  borderRadius: "5px",
 
   // change background colour if dragging
   background: isDragging ? "#5BE9B9" : "grey",
@@ -56,6 +57,9 @@ const getListStyle = isDraggingOver => ({
 
 export default function Kanban() {
   const [state, setState] = useState([]);
+  const [value, setValue] = useState("");
+  const [headers, setHeaders] = useState([]);
+  const [itemCount, setItemCount] = useState(30);
 
   function onDragEnd(result) {
     const { source, destination } = result;
@@ -66,6 +70,12 @@ export default function Kanban() {
     }
     const sInd = +source.droppableId;
     const dInd = +destination.droppableId;
+    // this needs to be fixed to allow for deleting of the right column headers
+    if (state.length < headers.length) {
+      const newHeaders = [...headers];
+      newHeaders.splice(dInd, 1);
+      setHeaders(newHeaders);
+    }
 
     if (sInd === dInd) {
       const items = reorder(state[sInd], source.index, destination.index);
@@ -84,15 +94,33 @@ export default function Kanban() {
 
   useEffect(() => {
     setState([getItems(10), getItems(10, 10), getItems(10, 20)]);
+    setHeaders(["Default Group 1", "Default Group 2", "Default Group 3"]);
   }, []);
 
   return (
+    // console.log('state: ', state),
+    // console.log('headers: ', headers),
     <div className={styles.kabanMain}>
       <h1>Ably Collaboration App</h1>
+      <input 
+        type="text" 
+        placeholder="Enter name of column" 
+        id="new-column-name" 
+        onChange={(e) => setValue(e.target.value)} 
+        value={value}
+      />
       <button
         type="button"
         onClick={() => {
+          if (value === "") {
+            alert("Please enter name of column");
+            return;
+          } else {
+          setHeaders([...headers, value]);
           setState([...state, []]);
+          setValue("");
+          setState([...state, getItems(1, itemCount)]);
+          }
         }}
       >
         Add new group
@@ -100,13 +128,18 @@ export default function Kanban() {
       <button
         type="button"
         onClick={() => {
-          setState([...state, getItems(1)]);
+          setState([...state, getItems(1, itemCount)]);
+          setHeaders([...headers, `New Column`]);
+          setItemCount(itemCount + 1);
         }}
       >
         Add new item
       </button>
-      <div style={{ display: "flex" }}>
+     
+      <div style={{ display: "flex" }}> 
         <DragDropContext onDragEnd={onDragEnd}>
+          {/* Need to figure out how to splice the headers array when a column is deleted with reference to right index */}
+        {state.length < headers.length ? setHeaders(headers.slice(0, -1)) : null}
           { state ? state.map((el, ind) => (
             <Droppable key={ind} droppableId={`${ind}`}>
               {(provided, snapshot) => (
@@ -115,6 +148,9 @@ export default function Kanban() {
                   style={getListStyle(snapshot.isDraggingOver)}
                   {...provided.droppableProps}
                 >
+                <span className={styles.columnHeader}>
+                  {headers[ind]}
+                </span>
                   {el.map((item, index) => (
                     <Draggable
                       key={item.id}
@@ -141,6 +177,11 @@ export default function Kanban() {
                             <button
                               type="button"
                               onClick={() => {
+                                if (state.length < headers.length) {
+                                const newHeaders = [...headers];
+                                newHeaders.splice(ind, 1);
+                                setHeaders(newHeaders);
+                                }
                                 const newState = [...state];
                                 newState[ind].splice(index, 1);
                                 setState(

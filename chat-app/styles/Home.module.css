@@ -6,7 +6,18 @@
 
 .kabanMain {
   position: absolute;
-  left: 900px;
+  left: 820px;
+}
+
+.columnHeader {
+  font-weight: bold;
+  border: 2px solid #eee;
+  border-radius: 5px;
+  padding: 10px 40px;
+  margin-left: auto;
+  line-height: 3;
+  color: white;
+  background-color: #6e07f3;
 }
 
 .container {
@@ -23,7 +34,6 @@
 }
 
 .footer {
-  position: relative;
   display: flex;
   flex-direction: row;
   border-top: 1px solid white;
@@ -37,4 +47,5 @@
   box-shadow: inset 0 0 30px #000000;
   margin-top: 100px;
   z-index: -1;
+  bottom: 0;
 }

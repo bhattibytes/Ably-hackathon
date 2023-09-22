@@ -88,7 +88,10 @@ const AblyChatComponent = () => {
 
   const switchChannel = (e) => {
     e.preventDefault();
-    const newChannelName = e.target.innerText;
+    const newChannelName = e.target.innerText.slice(2);
+    if (newChannelName === "#" || newChannelName === "") {
+      return;
+    }
     setChannelName(newChannelName);
     if (newChannelName === channelName) {
       alert("You are already in this channel")
@@ -101,8 +104,8 @@ const AblyChatComponent = () => {
         let messages = page.items.reverse();
         setMessages([...messages]);
       });
+    }
   }
-}
 
   useEffect(() => {
     messageEnd.scrollIntoView({ behaviour: "smooth" });
@@ -111,11 +114,14 @@ const AblyChatComponent = () => {
   return (
     <>
       <h1 className={styles.channels}>
-      <span className={styles.channelTitle}>Channels</span>
+      <span className={styles.channelTitle}>CHANNELS</span>
       {channels.map((channel, index) => 
-      <p className={styles.channelListItems} key={index} onClick={(e) => switchChannel(e)}>
-        {channel}
-      </p>
+      <span key={index}>
+        <p className={styles.channelListItems} onClick={(e) => switchChannel(e)}>
+        <span key={index} className={styles.hashTag}>#</span>
+          {channel}
+        </p>
+      </span>
       )}
       </h1>
     <center className={styles.chatCenter}>

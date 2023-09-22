@@ -1,18 +1,30 @@
 .channelTitle {
   font-size: 30px;
-  text-decoration: underline;
-  margin-left: -10px;
+  margin-left: 0px;
 }
 
 .channels {
   position: absolute;
   left: 0;
-  margin-left: 50px;
+  margin-left: 30px;
+}
+
+.hashTag {
+  position: absolute;
+  text-align: left;
+  left: 0;
 }
 
 .channelListItems {
   cursor: pointer;
-  margin-bottom: -20px;
+  margin-bottom: -10px;
+  font-size: 18px;
+  padding-left: 20px;
+}
+
+.channelListItems:hover {
+  background-color: #eee;
+  border-radius: 5px;
 }
 
 .createChannel {
@@ -25,7 +37,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  left: 300px;
+  left: 220px;
   margin-right: 60px;
 }
 
