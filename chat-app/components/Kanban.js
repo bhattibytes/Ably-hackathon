@@ -87,6 +87,48 @@ export default function Kanban() {
     }
   }
 
+  const handleUpdateHeader = (e) => {
+    let input = document.getElementById(`${e.target.id}-input`);
+
+    if (input.style.display === "none") {
+      input.style.display = "";
+    } else {
+      input.style.display = "none";
+    }
+   
+    if (headerValue === "") {
+      return;
+    }
+
+    let header = e.target.innerHTML;
+    const newHeaders = [...headers];
+    const index = newHeaders.indexOf(header);
+    
+    newHeaders.splice(index, 1, headerValue);
+    setHeaders(newHeaders);
+    if (headerValue !== "") {
+      setHeaderValue("");
+    }
+  };
+
+  const handleKeyDown = (e) => {
+
+    if (e.key === "Enter") {
+      let input = document.getElementById(`${e.target.id}`);
+      input.style.display = "none";
+
+      let header = input.id.split("-")[0];
+      const newHeaders = [...headers];
+      const index = newHeaders.indexOf(header);
+      
+      newHeaders.splice(index, 1, headerValue);
+      setHeaders(newHeaders);
+      if (headerValue !== "") {
+        setHeaderValue("");
+      }
+    }
+  }
+
   useEffect(() => {
     setState([getItems(10), getItems(10, 10), getItems(10, 20)]);
     setHeaders(["Default Group 1", "Default Group 2", "Default Group 3"]);
@@ -141,9 +183,16 @@ export default function Kanban() {
                   style={getListStyle(snapshot.isDraggingOver)}
                   {...provided.droppableProps}
                 >              
-                <span className={styles.columnHeader}>
+                <span className={styles.columnHeader} id={headers[ind]} onClick={(e)=> handleUpdateHeader(e)}>
                   {headers[ind] }
                 </span>
+                <input type="text" id={`${headers[ind]}-input`} key={ind}
+                  onChange={(e) => setHeaderValue(e.target.value)}
+                  onKeyDown={(e)=> handleKeyDown(e)} 
+                  className={styles.columnHeaderInput}
+                  style={{ display: 'none'}}
+                  value={headerValue} 
+                />
                   {el.map((item, index) => (
                     <Draggable
                       key={item.id}
@@ -201,4 +250,3 @@ export default function Kanban() {
     </div>
   );
 }
-

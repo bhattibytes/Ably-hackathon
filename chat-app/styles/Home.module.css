@@ -20,6 +20,11 @@
   background-color: #6e07f3;
 }
 
+.columnHeaderInput {
+  width: 95%;
+  height: 25px;
+}
+
 .container {
   position: absolute;
   bottom: 0;
