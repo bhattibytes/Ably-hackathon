@@ -1,0 +1,43 @@
+.kabanMain {
+  position: absolute;
+  left: 820px;
+}
+
+.columnHeader {
+  font-weight: bold;
+  border: 2px solid #eee;
+  border-radius: 5px;
+  padding: 10px 10px 10px 10px;
+  margin-left: auto;
+  line-height: 3;
+  color: white;
+  background-color: #6e07f3;
+}
+
+.columnHeaderInput {
+  width: 95%;
+  height: 25px;
+}
+
+.taskCard {
+  display: flex;
+  flex-direction: column;
+  border-radius: 5px;
+  line-height: 1.5;
+  color: white;
+}
+
+.taskTitle {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.taskButton {
+  width: 100px;
+  height: 30px;
+  border-radius: 5px;
+}
+
+.id {
+  text-align: right;
+}

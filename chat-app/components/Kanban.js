@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import styles from "../styles/Home.module.css";
+import styles from "../styles/Kaban.module.css";
 
 
 // fake data generator
@@ -60,7 +60,8 @@ export default function Kanban() {
   const [value, setValue] = useState("");
   const [headerValue, setHeaderValue] = useState("");
   const [headers, setHeaders] = useState([]);
-  const [itemCount, setItemCount] = useState(30);
+  const [task , setTask] = useState('');
+  const [itemCount, setItemCount] = useState(16);
 
   function onDragEnd(result) {
     const { source, destination } = result;
@@ -129,9 +130,41 @@ export default function Kanban() {
     }
   }
 
+  const handleClickEdit = (e) => {
+    let input = document.getElementById(`${e.target.id}=input`);
+    let taskElement = document.getElementById(`${e.target.id}=task`);
+
+    if (input.style.display === "none") {
+      input.style.display = "";
+    } else {
+      input.style.display = "none";
+    }
+
+    if (task === "") {
+      return;
+    }
+
+    taskElement.innerHTML = task;
+
+    if (task !== "") {
+      setTask("");
+    }
+  }
+
+  const handleKeyDownEdit = (e) => {
+    if (e.key === "Enter") {
+      let taskElement = document.getElementById(`${e.target.id.split('=')[0]}=task`);
+      
+      e.target.style.display = "none";
+      taskElement.innerHTML = task;
+
+      setTask("");
+    }
+  }
+
   useEffect(() => {
-    setState([getItems(10), getItems(10, 10), getItems(10, 20)]);
-    setHeaders(["Default Group 1", "Default Group 2", "Default Group 3"]);
+    setState([getItems(4), getItems(4, 8), getItems(4, 12), getItems(4, 16)]);
+    setHeaders(["Default Group 1", "Default Group 2", "Default Group 3", "Default Group 4"]);
   }, []);
 
   return (
@@ -210,13 +243,11 @@ export default function Kanban() {
                           )}
                         >
                           <div
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-around"
-                            }}
+                          className={styles.taskCard}
                           >
-                            {item.content}
+                            <span className={styles.taskTitle} id={`${item.id}=task`}>{item.content}</span>
                             <button
+                              className={styles.taskButton}
                               type="button"
                               onClick={() => {
                                 const newState = [...state];
@@ -235,6 +266,23 @@ export default function Kanban() {
                             >
                               delete
                             </button>
+                            <button
+                              type="button"
+                              className={styles.taskButton}
+                              onClick={(e) => {handleClickEdit(e)}}
+                              id={item.id}
+                            >
+                              edit/save
+                            </button>
+                            <input type="text" 
+                              id={`${item.id}=input`} 
+                              key={ind} 
+                              style={{ display: 'none', height: '30px' }} 
+                              value={task}
+                              onChange={(e) => {setTask(e.target.value) }}
+                              onKeyDown={(e)=> handleKeyDownEdit(e)}
+                            />
+                            <span className={styles.id}>id: {item.id.split('-')[1]}</span>
                           </div>
                         </div>
                       )}
