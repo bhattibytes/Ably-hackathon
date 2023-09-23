@@ -58,6 +58,7 @@ const getListStyle = isDraggingOver => ({
 export default function Kanban() {
   const [state, setState] = useState([]);
   const [value, setValue] = useState("");
+  const [headerValue, setHeaderValue] = useState("");
   const [headers, setHeaders] = useState([]);
   const [itemCount, setItemCount] = useState(30);
 
@@ -70,12 +71,6 @@ export default function Kanban() {
     }
     const sInd = +source.droppableId;
     const dInd = +destination.droppableId;
-    // this needs to be fixed to allow for deleting of the right column headers
-    if (state.length < headers.length) {
-      const newHeaders = [...headers];
-      newHeaders.splice(dInd, 1);
-      setHeaders(newHeaders);
-    }
 
     if (sInd === dInd) {
       const items = reorder(state[sInd], source.index, destination.index);
@@ -138,8 +133,6 @@ export default function Kanban() {
      
       <div style={{ display: "flex" }}> 
         <DragDropContext onDragEnd={onDragEnd}>
-          {/* Need to figure out how to splice the headers array when a column is deleted with reference to right index */}
-        {state.length < headers.length ? setHeaders(headers.slice(0, -1)) : null}
           { state ? state.map((el, ind) => (
             <Droppable key={ind} droppableId={`${ind}`}>
               {(provided, snapshot) => (
@@ -147,9 +140,9 @@ export default function Kanban() {
                   ref={provided.innerRef}
                   style={getListStyle(snapshot.isDraggingOver)}
                   {...provided.droppableProps}
-                >
+                >              
                 <span className={styles.columnHeader}>
-                  {headers[ind]}
+                  {headers[ind] }
                 </span>
                   {el.map((item, index) => (
                     <Draggable
@@ -177,15 +170,17 @@ export default function Kanban() {
                             <button
                               type="button"
                               onClick={() => {
-                                if (state.length < headers.length) {
-                                const newHeaders = [...headers];
-                                newHeaders.splice(ind, 1);
-                                setHeaders(newHeaders);
-                                }
                                 const newState = [...state];
                                 newState[ind].splice(index, 1);
                                 setState(
-                                  newState.filter(group => group.length)
+                                  newState.filter(group => {
+                                    if (group.length === 0) {
+                                      const newHeaders = [...headers];
+                                      newHeaders.splice(ind, 1);
+                                      setHeaders(newHeaders);
+                                    }
+                                    return group.length
+                                  })
                                 );
                               }}
                             >
