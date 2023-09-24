@@ -78,6 +78,14 @@
   align-items: flex-end;
 }
 
+.messages:has(.messageMe) {
+  align-self: flex-start;
+}
+
+.messages:has(.message) {
+  align-self: flex-end;
+}
+
 .message {
   background-color: lightgrey;
   text-align: left;
@@ -94,6 +102,24 @@
   border-radius: 10px;
   flex-grow: 0;
   border-bottom-left-radius: 0;
+}
+
+.newChannelButton {
+  border-radius: 5px;
+  color: white;
+  font-size: 1.1em;
+  background: linear-gradient(to right, #6e07f3, #5BE9B9);
+  margin-left: 5px;
+}
+
+.newChannelButton:hover {
+  background: linear-gradient(90deg, #6e07f3 0%, #5BE9B9 62%, #5BE9B9 100%);
+}
+
+.createChannelInput {
+  line-height: 1.5;
+  border-radius: 5px;
+  margin-bottom: 2px;
 }
 
 .button {

@@ -173,13 +173,15 @@ export default function Kanban() {
     <div className={styles.kabanMain}>
       <h1>Ably Collaboration App</h1>
       <input 
+        className={styles.inputNewGroup}
         type="text" 
-        placeholder="Enter name of column" 
+        placeholder="Enter New Group Name" 
         id="new-column-name" 
         onChange={(e) => setValue(e.target.value)} 
         value={value}
       />
       <button
+      className={styles.button}
         type="button"
         onClick={() => {
           if (value === "") {
@@ -196,17 +198,18 @@ export default function Kanban() {
         Add new group
       </button>
       <button
+        className={styles.button}
         type="button"
         onClick={() => {
           setState([...state, getItems(1, itemCount)]);
-          setHeaders([...headers, `New Column`]);
+          setHeaders([...headers, `New Group`]);
           setItemCount(itemCount + 1);
         }}
       >
         Add new item
       </button>
      
-      <div style={{ display: "flex" }}> 
+      <div className={styles.kanbanBoard}> 
         <DragDropContext onDragEnd={onDragEnd}>
           { state ? state.map((el, ind) => (
             <Droppable key={ind} droppableId={`${ind}`}>

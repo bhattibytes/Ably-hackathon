@@ -128,6 +128,7 @@ const AblyChatComponent = () => {
       <h1>"{channelName}"</h1>
       <div className={styles.createChannel}>
         <input 
+        className={styles.createChannelInput}
         id="create-channel" 
         type="text" 
         placeholder="Enter Channel Name"
@@ -141,7 +142,7 @@ const AblyChatComponent = () => {
           }
         }}
         />
-        <button onClick={createChannel}>Create New Channel</button>
+        <button className={styles.newChannelButton} onClick={createChannel}>Create New Channel</button>
       </div>
       <div className={styles.chatHolder}>
         <div className={styles.chatText}>
