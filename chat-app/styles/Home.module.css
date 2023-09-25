@@ -17,6 +17,33 @@
   margin-right: 20px;
 }
 
+.accessDenied {
+  border: 5px solid;
+  margin: auto;
+  width: 50%;
+  padding: 10px;
+  border-radius: 25px;
+  text-align: center;
+}
+
+.clickHere {
+  text-decoration: none;
+}
+
+.welcome {
+  position: absolute; 
+  bottom: 20px;
+  left: 20px; 
+  display: flex; 
+  flex-direction: row;
+}
+
+.welcomeImg {
+  border: 1px solid black; 
+  border-radius: 50px; 
+  display: inline-block;
+}
+
 .footer {
   display: flex;
   flex-direction: row;
