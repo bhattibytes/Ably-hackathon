@@ -26,8 +26,9 @@ export default function Home() {
         <main className={styles.main}>
           <div className={styles.welcome}>
             <img className={styles.welcomeImg} src={session.user.image} />
-            &nbsp;&nbsp;<h1>Welcome {session.user.name} &nbsp;
-              <a href='https://ably-hackathon.vercel.app/api/auth/signout'>Sign Out</a>
+            &nbsp;&nbsp;<h1>Welcome {session.user.name.split(' ')[0]} &nbsp;
+              <a className={styles.links} href='/profile'>Profile |</a>
+              <a className={styles.links} href='/api/auth/signout'>&nbsp;Sign Out</a>
             </h1>
           </div>
           <AblyChatComponent />

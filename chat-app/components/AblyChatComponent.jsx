@@ -3,6 +3,7 @@ import { useChannel } from "./AblyReactEffect.js";
 import styles from '../styles/AblyChatComponent.module.css';
 import { Editor } from '@tinymce/tinymce-react';
 import parse from 'html-react-parser';
+import { useSession } from 'next-auth/react';
 
 const AblyChatComponent = () => {
   let messageEnd = null;
@@ -12,6 +13,8 @@ const AblyChatComponent = () => {
   const [value, setValue] = useState("");
   const [channelName, setChannelName] = useState("home");
   const [channels, setChannels] = useState(["announcements","home", "general", "random", "help"]);
+  const { data: session, status } = useSession()
+
 
   const [channel, ably] = useChannel(`${channelName}`, (message) => {
     setMessages((receivedMessages)=>[...receivedMessages, message]);
@@ -37,29 +40,32 @@ const AblyChatComponent = () => {
   }
 
   const messages = receivedMessages.map((message, index) => {
-    const author = message.connectionId === ably.connection.id ? "Me" : "Ghost";
-    let parsedMessage;
-    try {
-      parsedMessage = parse(message.data);
-    } catch (error) {
-      console.log(error);
-      parsedMessage = message.data;
+    if (session && status === 'authenticated') {
+      console.log('session: ', session)
+      const author = message.connectionId === ably.connection.id ? session.user.name.split(' ')[0] : "Ghost";
+      let parsedMessage;
+      try {
+        parsedMessage = parse(message.data);
+      } catch (error) {
+        console.log(error);
+        parsedMessage = message.data;
+      }
+      return (
+      <span key={index} className={styles.messages}>
+        { author === "Ghost" ? 
+        <>
+          <span className={styles.message} data-author={author}>{parsedMessage}</span>
+          <span className={styles.author}>&nbsp;{author}</span>
+        </>
+        :
+        <>
+          <span className={styles.author}>{author}&nbsp;</span>
+          <span className={styles.messageMe} data-author={author}>{parsedMessage}</span>
+        </>
+      }
+      </span>
+      )
     }
-    return (
-    <span key={index} className={styles.messages}>
-      { author === "Ghost" ? 
-      <>
-        <span className={styles.message} data-author={author}>{parsedMessage}</span>
-        <span className={styles.author}>&nbsp;{author}</span>
-      </>
-      :
-      <>
-        <span className={styles.author}>{author}&nbsp;</span>
-        <span className={styles.messageMe} data-author={author}>{parsedMessage}</span>
-      </>
-    }
-    </span>
-    )
   });
 
   const createChannel = () => {

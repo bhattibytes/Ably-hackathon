@@ -17,6 +17,12 @@
   margin-right: 20px;
 }
 
+.links {
+  text-decoration: none;
+  color: white;
+  font-size: 24px;
+}
+
 .accessDenied {
   border: 5px solid;
   margin: auto;
@@ -48,7 +54,7 @@
   display: flex;
   flex-direction: row;
   border-top: 1px solid white;
-  justify-content: center;
+  justify-content: right;
   align-items: center;
   color: white;
   height: 150px; 
