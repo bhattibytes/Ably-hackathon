@@ -61,7 +61,7 @@ export default function Kanban() {
   const [headerValue, setHeaderValue] = useState("");
   const [headers, setHeaders] = useState([]);
   const [task , setTask] = useState('');
-  const [itemCount, setItemCount] = useState(16);
+  const [itemCount, setItemCount] = useState(20);
 
   function onDragEnd(result) {
     const { source, destination } = result;
@@ -84,7 +84,14 @@ export default function Kanban() {
       newState[sInd] = result[sInd];
       newState[dInd] = result[dInd];
 
-      setState(newState.filter(group => group.length));
+      setState(newState.filter(group => {
+        if (group.length === 0) {
+          const newHeaders = [...headers];
+          newHeaders.splice(sInd, 1);
+          setHeaders(newHeaders);
+        }
+        return group.length
+      }));
     }
   }
 
@@ -168,8 +175,8 @@ export default function Kanban() {
   }, []);
 
   return (
-    // console.log('state: ', state),
-    // console.log('headers: ', headers),
+    console.log('state: ', state),
+    console.log('headers: ', headers),
     <div className={styles.kabanMain}>
       <h1>Ably Collaboration App</h1>
       <input 
@@ -189,9 +196,9 @@ export default function Kanban() {
             return;
           } else {
           setHeaders([...headers, value]);
-          setState([...state, []]);
-          setValue("");
           setState([...state, getItems(1, itemCount)]);
+          setItemCount(itemCount + 1);
+          setValue("");
           }
         }}
       >
