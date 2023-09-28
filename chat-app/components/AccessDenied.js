@@ -6,14 +6,14 @@ export default function AccessDenied () {
     <div className={styles.accessDenied}>
       <h1>Welcome to Ably Realtime Chat & Collaboration App</h1>
       <h2>Access Denied</h2>
-      <p>
+      <div>
         <a href="/api/auth/signin"
            className={styles.clickHere}
            onClick={(e) => {
            e.preventDefault()
            signIn()
         }}><h3 >👉 Click Here to Sign-in 👈</h3></a>
-      </p>
+      </div>
     </div>
   )
 }

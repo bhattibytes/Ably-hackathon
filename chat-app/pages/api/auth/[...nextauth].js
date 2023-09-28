@@ -48,6 +48,11 @@ export const authOptions = {
     async session({ session, token, user }) {
       // Send properties to the client, like an access_token from a provider.
       session.accessToken = token.accessToken
+      user = session.user.name
+
+      // console.log('session: ', session);
+      // console.log('user: ', user);
+     
       return session
     },
     async authorized({ req , token }) {

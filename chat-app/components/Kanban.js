@@ -175,8 +175,8 @@ export default function Kanban() {
   }, []);
 
   return (
-    console.log('state: ', state),
-    console.log('headers: ', headers),
+    // console.log('state: ', state),
+    // console.log('headers: ', headers),
     <div className={styles.kabanMain}>
       <h1>Ably Collaboration App</h1>
       <input 

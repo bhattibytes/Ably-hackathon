@@ -5,28 +5,118 @@ import { Editor } from '@tinymce/tinymce-react';
 import parse from 'html-react-parser';
 import { useSession } from 'next-auth/react';
 
+const dynamodb = new AWS.DynamoDB({
+  convertEmptyValues: true
+});
+
 const AblyChatComponent = () => {
   let messageEnd = null;
 
   const [messageText, setMessageText] = useState("");
-  const [receivedMessages, setMessages] = useState([]);
+  // const [receivedMessages, setMessages] = useState([]);
   const [value, setValue] = useState("");
   const [channelName, setChannelName] = useState("home");
   const [channels, setChannels] = useState(["announcements","home", "general", "random", "help"]);
-  const { data: session, status } = useSession()
-
+  const { data: session, status } = useSession();
+  const [messagesFromDB, setMessagesFromDB] = useState([]);
 
   const [channel, ably] = useChannel(`${channelName}`, (message) => {
-    setMessages((receivedMessages)=>[...receivedMessages, message]);
+    setMessages((messagesFromDB)=>[...messagesFromDB, message]);
   });
+
+  async function queryWithPartiQL() {
+    const statement = 'SELECT * FROM "ably_users"';
+    return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
+      if (data.Items.length) {
+        setMessagesFromDB(data.Items);
+      }
+    }).catch((error) => {
+      console.log('error: ', error);  
+    });;
+  }
+
+  useEffect(() => {
+    setMessagesFromDB(queryWithPartiQL());
+  }, [messageText]);
+
+  let parsedMessages;
+  if (messagesFromDB.length) {
+      var sorted = messagesFromDB.sort((a, b) => {
+        return new Date(a.timestamp.S).getTime() - new Date(b.timestamp.S).getTime();
+      });
+      sorted = sorted.filter((message) => {
+        return message.channel.S === channelName;
+      });
+      
+      parsedMessages = sorted.map((message, index) => {
+    
+      let parsedMessage;
+      const author = message.author.S
+      try {
+        parsedMessage = parse(message.message.S);
+      } catch (error) {
+        console.log(error);
+        parsedMessage = message.message.S;
+      } 
+      return (
+        <span key={index} className={styles.messages}>
+          { session.user.email === message.email.S ? 
+            <>
+              <span className={styles.author}>{author}&nbsp;</span>
+              <span className={styles.messageMe} data-author={author}>{parsedMessage}</span>
+            </>
+            :
+            <>
+              <span className={styles.message} data-author={author}>{parsedMessage}</span>
+              <span className={styles.author}>&nbsp;{author}</span>
+            </>
+          }
+        </span>
+        )
+    });
+  }
+
+  // const messages = receivedMessages.map((message, index) => {
+  //   if (session && status === 'authenticated') {
+  //     const author = message.author !== 'Anonymous' ? message.author : "Ghost";
+  //     let parsedMessage;
+  //     try {
+  //       parsedMessage = parse(message.data);
+  //     } catch (error) {
+  //       console.log(error);
+  //       parsedMessage = message.data;
+  //     }
+  //     return (
+  //     <span key={index} className={styles.messages}>
+  //       { author === "Ghost" ? 
+  //         <>
+  //           <span className={styles.message} data-author={author}>{parsedMessage}</span>
+  //           <span className={styles.author}>&nbsp;{author}</span>
+  //         </>
+  //         :
+  //         <>
+  //           <span className={styles.author}>{author}&nbsp;</span>
+  //           <span className={styles.messageMe} data-author={author}>{parsedMessage}</span>
+  //         </>
+  //       }
+  //     </span>
+  //     )
+  //   }
+  // });
+
 
   const form = document.querySelector('form#chat-form');
   const input = document.querySelector('input#create-channel');
 
-  const sendChatMessage = (messageText) => {
-    channel.publish({ 
-      name: channelName, data: `<strong>${messageText.slice(3, -4) + '</strong> <em>at</em> ' + '<em>'+ new Date().toLocaleString().split(',')[1]}</em>` 
-    });
+  const sendChatMessage = async (messageText) => {
+    if (messageText !== '') {
+      await channel.publish({ 
+        name: channelName, data: `<strong>${messageText.slice(3, -4) + '</strong> <em>at</em> ' + '<em>'+ new Date().toLocaleString().split(',')[1]}</em>` 
+      });
+      setTimeout(() => {
+        setMessagesFromDB(queryWithPartiQL());
+      }, 100);
+    }
   }
   
   const handleFormSubmission = (event) => {
@@ -39,34 +129,6 @@ const AblyChatComponent = () => {
     }
   }
 
-  const messages = receivedMessages.map((message, index) => {
-    if (session && status === 'authenticated') {
-      console.log('session: ', session)
-      const author = message.connectionId === ably.connection.id ? session.user.name.split(' ')[0] : "Ghost";
-      let parsedMessage;
-      try {
-        parsedMessage = parse(message.data);
-      } catch (error) {
-        console.log(error);
-        parsedMessage = message.data;
-      }
-      return (
-      <span key={index} className={styles.messages}>
-        { author === "Ghost" ? 
-        <>
-          <span className={styles.message} data-author={author}>{parsedMessage}</span>
-          <span className={styles.author}>&nbsp;{author}</span>
-        </>
-        :
-        <>
-          <span className={styles.author}>{author}&nbsp;</span>
-          <span className={styles.messageMe} data-author={author}>{parsedMessage}</span>
-        </>
-      }
-      </span>
-      )
-    }
-  });
 
   const createChannel = () => {
     if (value === '') {
@@ -118,6 +180,8 @@ const AblyChatComponent = () => {
   });
 
   return (
+    // console.log('session: ', session),
+    // console.log('receivedMessages: ', receivedMessages),
     <>
       <h1 className={styles.channels}>
       <span className={styles.channelTitle}>CHANNELS</span>
@@ -152,7 +216,7 @@ const AblyChatComponent = () => {
       </div>
       <div className={styles.chatHolder}>
         <div className={styles.chatText}>
-          {messages}
+          {parsedMessages}
           <div ref={(element) => { messageEnd = element; }}></div> 
         </div>
         <form
