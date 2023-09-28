@@ -5,23 +5,20 @@ import { Editor } from '@tinymce/tinymce-react';
 import parse from 'html-react-parser';
 import { useSession } from 'next-auth/react';
 
-const dynamodb = new AWS.DynamoDB({
-  convertEmptyValues: true
-});
+const dynamodb = new AWS.DynamoDB({ convertEmptyValues: true });
 
 const AblyChatComponent = () => {
   let messageEnd = null;
 
   const [messageText, setMessageText] = useState("");
-  // const [receivedMessages, setMessages] = useState([]);
   const [value, setValue] = useState("");
   const [channelName, setChannelName] = useState("home");
-  const [channels, setChannels] = useState(["announcements","home", "general", "random", "help"]);
+  const [channels, setChannels] = useState(["home", "general", "random", "help"]);
   const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
 
   const [channel, ably] = useChannel(`${channelName}`, (message) => {
-    setMessages((messagesFromDB)=>[...messagesFromDB, message]);
+    if (Array.isArray(messagesFromDB)) { setMessagesFromDB((messagesFromDB)=>[...messagesFromDB, message]); }
   });
 
   async function queryWithPartiQL() {
@@ -39,71 +36,37 @@ const AblyChatComponent = () => {
     setMessagesFromDB(queryWithPartiQL());
   }, [messageText]);
 
-  let parsedMessages;
-  if (messagesFromDB.length) {
-      var sorted = messagesFromDB.sort((a, b) => {
-        return new Date(a.timestamp.S).getTime() - new Date(b.timestamp.S).getTime();
-      });
-      sorted = sorted.filter((message) => {
-        return message.channel.S === channelName;
-      });
+  var parsedMessages = [];
+  if (messagesFromDB.length && session && status === 'authenticated') {
+      var sorted = messagesFromDB.sort((a, b) => new Date(a.timestamp.S).getTime() - new Date(b.timestamp.S).getTime() );
+      sorted = sorted.filter((message) => message.channel ? message.channel.S === channelName : null );
       
       parsedMessages = sorted.map((message, index) => {
-    
-      let parsedMessage;
-      const author = message.author.S
-      try {
-        parsedMessage = parse(message.message.S);
-      } catch (error) {
-        console.log(error);
-        parsedMessage = message.message.S;
-      } 
-      return (
-        <span key={index} className={styles.messages}>
-          { session.user.email === message.email.S ? 
-            <>
-              <span className={styles.author}>{author}&nbsp;</span>
-              <span className={styles.messageMe} data-author={author}>{parsedMessage}</span>
-            </>
-            :
-            <>
-              <span className={styles.message} data-author={author}>{parsedMessage}</span>
-              <span className={styles.author}>&nbsp;{author}</span>
-            </>
-          }
-        </span>
-        )
-    });
+        let parsedMessage;
+        const author = message.author.S
+        try {
+          parsedMessage = parse(message.message.S);
+        } catch (error) {
+          console.log(error);
+          parsedMessage = message.message.S;
+        } 
+        return (
+          <span key={index} className={styles.messages}>
+            { session.user.email === message.email.S ? 
+              <>
+                <span className={styles.author}>{author}&nbsp;</span>
+                <span className={styles.messageMe} data-author={author}>{parsedMessage}</span>
+              </>
+              :
+              <>
+                <span className={styles.message} data-author={author}>{parsedMessage}</span>
+                <span className={styles.author}>&nbsp;{author}</span>
+              </>
+            }
+          </span>
+          )
+      });
   }
-
-  // const messages = receivedMessages.map((message, index) => {
-  //   if (session && status === 'authenticated') {
-  //     const author = message.author !== 'Anonymous' ? message.author : "Ghost";
-  //     let parsedMessage;
-  //     try {
-  //       parsedMessage = parse(message.data);
-  //     } catch (error) {
-  //       console.log(error);
-  //       parsedMessage = message.data;
-  //     }
-  //     return (
-  //     <span key={index} className={styles.messages}>
-  //       { author === "Ghost" ? 
-  //         <>
-  //           <span className={styles.message} data-author={author}>{parsedMessage}</span>
-  //           <span className={styles.author}>&nbsp;{author}</span>
-  //         </>
-  //         :
-  //         <>
-  //           <span className={styles.author}>{author}&nbsp;</span>
-  //           <span className={styles.messageMe} data-author={author}>{parsedMessage}</span>
-  //         </>
-  //       }
-  //     </span>
-  //     )
-  //   }
-  // });
-
 
   const form = document.querySelector('form#chat-form');
   const input = document.querySelector('input#create-channel');
@@ -111,11 +74,10 @@ const AblyChatComponent = () => {
   const sendChatMessage = async (messageText) => {
     if (messageText !== '') {
       await channel.publish({ 
-        name: channelName, data: `<strong>${messageText.slice(3, -4) + '</strong> <em>at</em> ' + '<em>'+ new Date().toLocaleString().split(',')[1]}</em>` 
+        name: channelName, 
+        data: `<strong>${messageText.slice(3, -4) + '</strong> <em>at</em> ' + '<em>'+ new Date().toLocaleString().split(',')[1]}</em>` 
       });
-      setTimeout(() => {
-        setMessagesFromDB(queryWithPartiQL());
-      }, 100);
+      setTimeout(() => { setMessagesFromDB(queryWithPartiQL()); }, 50);
     }
   }
   
@@ -129,7 +91,6 @@ const AblyChatComponent = () => {
     }
   }
 
-
   const createChannel = () => {
     if (value === '') {
       alert("Please enter a channel name")
@@ -141,14 +102,17 @@ const AblyChatComponent = () => {
       const newChannel = ably.channels.get(`[?rewind=2m&rewindLimit=10]${value}`);
       newChannel.attach();
       newChannel.publish({ 
-        name: value, data: `A New Channel named <strong>"${value}"</strong> was created <em> at ${new Date().toLocaleString().split(',')[1]}</em>` 
+        name: value, 
+        data: `A New Channel named <strong>"${value}"</strong> was created <em> at ${new Date().toLocaleString().split(',')[1]}</em>` 
       });
       newChannel.once("attached", () => {
         newChannel.history((err, page) => {
           const messages = page.items.reverse();
-          setMessages([...messages]);
+          console.log('messages: ', messages);
+          setMessagesFromDB([...messages]);
           setChannels((channels)=>[...channels, value]);
         });
+        setTimeout(() => { setMessagesFromDB(queryWithPartiQL()); }, 50);
         setValue("");
       });
     }
@@ -167,10 +131,13 @@ const AblyChatComponent = () => {
     } else {
     const newChannel = ably.channels.get(`[?rewind=2m&rewindLimit=10]${newChannelName}`);
     newChannel.attach();
-    newChannel.publish({ name: newChannelName, data: `Switched to channel: <strong>"${newChannelName}"</strong>` });
+    newChannel.publish({ 
+      name: newChannelName, 
+      data: `Switched to channel: <strong>"${newChannelName}"</strong> at ${new Date().toLocaleString().split(',')[1]}` 
+    });
       newChannel.history((err, page) => {
         let messages = page.items.reverse();
-        setMessages([...messages]);
+        setMessagesFromDB((messagesFromDB)=>[...messagesFromDB, ...messages]);
       });
     }
   }
@@ -194,68 +161,68 @@ const AblyChatComponent = () => {
       </span>
       )}
       </h1>
-    <center className={styles.chatCenter}>
-      <h1>"{channelName}"</h1>
-      <div className={styles.createChannel}>
-        <input 
-        className={styles.createChannelInput}
-        id="create-channel" 
-        type="text" 
-        placeholder="Enter Channel Name"
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key == "Enter") {
-            e.preventDefault();
-            createChannel();
-            setValue("");
-          }
-        }}
-        />
-        <button className={styles.newChannelButton} onClick={createChannel}>Create New Channel</button>
-      </div>
-      <div className={styles.chatHolder}>
-        <div className={styles.chatText}>
-          {parsedMessages}
-          <div ref={(element) => { messageEnd = element; }}></div> 
-        </div>
-        <form
-        id="chat-form" 
-        onSubmit={handleFormSubmission} 
-        className={styles.form}
-        >
-          <Editor
-            apiKey={process.env.TINY_MCE_API_KEY}
-            onKeyDown={(e) => {
-              if (e.key == "Enter") {
-                e.preventDefault();
-                sendChatMessage(messageText);
-                form.reset();
-              }
-            }}
-            init={{
-              height: 180,
-              placeholder: "Type your message here...",
-              menubar: false,
-              plugins: [
-                'emoticons',
-                'insertdatetime',
-                'link',
-                'lists',
-                'table',
-                'image',
-                'code'
-              ],
-              toolbar:
-                'undo redo | formatselect | bold italic backcolor | \
-                emoticons | link | code |  removeformat \ '
-            }}
-            onEditorChange={(content, editor) => setMessageText(content)}
+      <center className={styles.chatCenter}>
+        <h1>"{channelName}"</h1>
+        <div className={styles.createChannel}>
+          <input 
+          className={styles.createChannelInput}
+          id="create-channel" 
+          type="text" 
+          placeholder="Enter Channel Name"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key == "Enter") {
+              e.preventDefault();
+              createChannel();
+              setValue("");
+            }
+          }}
           />
-          <button type="submit" className={styles.button}>Send</button>
-        </form>
-      </div>
-    </center>
+          <button className={styles.newChannelButton} onClick={createChannel}>Create New Channel</button>
+        </div>
+        <div className={styles.chatHolder}>
+          <div className={styles.chatText}>
+            {parsedMessages}
+            <div ref={(element) => { messageEnd = element; }}></div> 
+          </div>
+          <form
+          id="chat-form" 
+          onSubmit={handleFormSubmission} 
+          className={styles.form}
+          >
+            <Editor
+              apiKey={process.env.TINY_MCE_API_KEY}
+              onKeyDown={(e) => {
+                if (e.key == "Enter") {
+                  e.preventDefault();
+                  sendChatMessage(messageText);
+                  form.reset();
+                }
+              }}
+              init={{
+                height: 180,
+                placeholder: "Type your message here...",
+                menubar: false,
+                plugins: [
+                  'emoticons',
+                  'insertdatetime',
+                  'link',
+                  'lists',
+                  'table',
+                  'image',
+                  'code'
+                ],
+                toolbar:
+                  'undo redo | formatselect | bold italic backcolor | \
+                  emoticons | link | code |  removeformat \ '
+              }}
+              onEditorChange={(content, editor) => setMessageText(content)}
+            />
+            <button type="submit" className={styles.button}>Send</button>
+          </form>
+        </div>
+      </center>
     </>
   )
 }

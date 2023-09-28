@@ -10,13 +10,8 @@ AWS.config.update({
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 });
 
-export const docClient = new AWS.DynamoDB.DocumentClient({
-  convertEmptyValues: true
-});
-
-export const dynamodb = new AWS.DynamoDB({
-  convertEmptyValues: true
-});
+export const docClient = new AWS.DynamoDB.DocumentClient({ convertEmptyValues: true });
+export const dynamodb = new AWS.DynamoDB({ convertEmptyValues: true });
 
 const ably = new Ably.Realtime.Promise({ authUrl: '/api/createTokenRequest' });
 
