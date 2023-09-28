@@ -64,6 +64,22 @@
 
 .author {
   font-weight: bold;
+  color: #6e07f3;
+}
+
+.authorMe {
+  font-weight: bold;
+  color: #6ce4bc;
+}
+
+.messageImgMe {
+  border-radius: 100px; 
+  margin-right: 5px;
+}
+
+.messageImg {
+  border-radius: 100px; 
+  margin-left: 5px;
 }
 
 .form {
@@ -75,7 +91,7 @@
 .messages {
   display: flex; 
   flex-direction: row; 
-  align-items: flex-end;
+  align-items: flex-start;
 }
 
 .messages:has(.messageMe) {
@@ -92,16 +108,16 @@
   padding: 1em;
   border-radius: 10px;
   flex-grow: 0;
-  border-bottom-right-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .messageMe {
-  background-color: #5BE9B9;
+  background: linear-gradient(90deg,  #aa53f2 0%, 62%, #7061f1 100%);
   text-align: left;
   padding: 1em;
   border-radius: 10px;
   flex-grow: 0;
-  border-bottom-left-radius: 0;
+  border-top-left-radius: 0;
 }
 
 .newChannelButton {

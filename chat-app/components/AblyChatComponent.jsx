@@ -60,13 +60,17 @@ const AblyChatComponent = () => {
           <span key={index} className={styles.messages}>
             { session.user.email === message.email.S ? 
               <>
-                <span className={styles.author}>{author}&nbsp;</span>
-                <span className={styles.messageMe} data-author={author}>{parsedMessage}</span>
+                <img height={40} className={styles.messageImgMe} src={message.image.S}/>   
+                <span className={styles.messageMe} data-author={author}>
+                  <span className={styles.authorMe}>{author}<br/></span>{parsedMessage}
+                </span>     
               </>
               :
               <>
-                <span className={styles.message} data-author={author}>{parsedMessage}</span>
-                <span className={styles.author}>&nbsp;{author}</span>
+                <span className={styles.message} data-author={author}> 
+                  <span id="other" className={styles.author}>{author}<br/></span>{parsedMessage}
+                </span>
+                <img height={40} className={styles.messageImg} src={message.image.S}/>
               </>
             }
           </span>
@@ -114,7 +118,6 @@ const AblyChatComponent = () => {
       newChannel.once("attached", () => {
         newChannel.history((err, page) => {
           const messages = page.items.reverse();
-          console.log('messages: ', messages);
           setMessagesFromDB([...messages]);
           setChannels((channels)=>[...channels, value]);
         });
@@ -153,8 +156,6 @@ const AblyChatComponent = () => {
   });
 
   return (
-    // console.log('session: ', session),
-    // console.log('receivedMessages: ', receivedMessages),
     <>
       <h1 className={styles.channels}>
       <span className={styles.channelTitle}>CHANNELS</span>
