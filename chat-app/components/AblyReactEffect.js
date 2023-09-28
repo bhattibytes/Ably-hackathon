@@ -42,7 +42,7 @@ export function useChannel(channelName, callbackOnMessage) {
           if (err) {
             console.log('Error', err);
           } else {
-            console.log('Success', data);
+            console.log('Success MSG: ', msg);
           }
         });
       }

@@ -17,10 +17,6 @@ const AblyChatComponent = () => {
   const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
 
-  const [channel, ably] = useChannel(`${channelName}`, (message) => {
-    if (Array.isArray(messagesFromDB)) { setMessagesFromDB((messagesFromDB)=>[...messagesFromDB, message]); }
-  });
-
   async function queryWithPartiQL() {
     const statement = 'SELECT * FROM "ably_users"';
     return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
@@ -32,9 +28,19 @@ const AblyChatComponent = () => {
     });;
   }
 
+  const [channel, ably] = useChannel(`${channelName}`, async (message) => {
+    let messagesFromDBCall = [];
+    setTimeout(async() => { messagesFromDBCall = await queryWithPartiQL(); }, 50);
+    setTimeout(() => { 
+      if (Array.isArray(messagesFromDB) && Array.isArray(messagesFromDBCall)) { 
+        setMessagesFromDB((messagesFromDB)=>[...messagesFromDB, ...messagesFromDBCall, message]); 
+      }
+     }, 500);
+  });
+
   useEffect(() => {
     setMessagesFromDB(queryWithPartiQL());
-  }, [messageText]);
+  }, []);
 
   var parsedMessages = [];
   if (messagesFromDB.length && session && status === 'authenticated') {
