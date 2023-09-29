@@ -7,7 +7,7 @@ import styles from "../styles/Kaban.module.css";
 const getItems = (count, offset = 0) =>
   Array.from({ length: count }, (v, k) => k).map(k => ({
     id: `item-${k + offset}-${new Date().getTime()}`,
-    content: `task ${k + offset}`
+    content: `Task #${k + offset}`
   }));
 
 const reorder = (list, startIndex, endIndex) => {
@@ -111,6 +111,13 @@ export default function Kanban() {
       return;
     }
 
+    if (headers.includes(headerValue)) {
+      alert("Column name already exists");
+      input.style.display = "none";
+      setHeaderValue("");
+      return;
+    }
+
     let header = e.target.innerHTML;
     const newHeaders = [...headers];
     const index = newHeaders.indexOf(header);
@@ -125,6 +132,11 @@ export default function Kanban() {
   const handleKeyDown = (e) => {
 
     if (e.key === "Enter") {
+      if (headers.includes(headerValue)) {
+        alert("Column name already exists");
+        setHeaderValue("");
+        return;
+      }
       let input = document.getElementById(`${e.target.id}`);
       input.style.display = "none";
 
