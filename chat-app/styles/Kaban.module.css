@@ -3,11 +3,20 @@
   left: 820px;
 }
 
+.columnsContainer {
+  display: flex;
+  flex-direction: row;
+  width: 800px;
+  overflow: scroll;
+}
+
 .kanbanBoard {
   display: flex; 
   border: 5px solid #defaf1;
   border-radius: 10px;
   margin-top: 2px;
+  background-color: #defaf1;
+  box-shadow: 8px 5px 5px 1px #5BE9B9;
 }
 
 .inputNewGroup {
@@ -29,18 +38,22 @@
 }
 
 .columnHeader {
+  position: absolute;
+  top: 120px;
   font-weight: bold;
   border: 2px solid #eee;
   border-radius: 5px;
-  padding: 10px 10px 10px 10px;
+  padding-left: 20px;
+  padding-right: 20px;
   margin-left: auto;
   line-height: 3;
   color: white;
-  background-color: #6e07f3;
+  background: linear-gradient(90deg,  #aa53f2 0%, 62%, #7061f1 100%);
 }
 
 .columnHeaderInput {
-  width: 95%;
+  position: absolute;
+  width: 190px;
   height: 25px;
 }
 

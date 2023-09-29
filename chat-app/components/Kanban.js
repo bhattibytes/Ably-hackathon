@@ -52,7 +52,10 @@ const getItemStyle = (isDragging, draggableStyle) => ({
 const getListStyle = isDraggingOver => ({
   background: isDraggingOver ? "#6e07f3" : "#defaf1",
   padding: grid,
-  width: 250
+  width: 250,
+  height: 620,
+  overflow: "scroll",
+  marginTop: "50px"
 });
 
 export default function Kanban() {
@@ -61,7 +64,7 @@ export default function Kanban() {
   const [headerValue, setHeaderValue] = useState("");
   const [headers, setHeaders] = useState([]);
   const [task , setTask] = useState('');
-  const [itemCount, setItemCount] = useState(20);
+  const [itemCount, setItemCount] = useState(40);
 
   function onDragEnd(result) {
     const { source, destination } = result;
@@ -170,8 +173,8 @@ export default function Kanban() {
   }
 
   useEffect(() => {
-    setState([getItems(4), getItems(4, 8), getItems(4, 12), getItems(4, 16)]);
-    setHeaders(["Default Group 1", "Default Group 2", "Default Group 3", "Default Group 4"]);
+    setState([getItems(10), getItems(10, 10), getItems(10, 20), getItems(10, 30)]);
+    setHeaders(["Click to Edit 1", "Click to Edit 2", "Click to Edit 3", "Click to Edit 4"]);
   }, []);
 
   return (
@@ -194,6 +197,9 @@ export default function Kanban() {
           if (value === "") {
             alert("Please enter name of column");
             return;
+          } else if (headers.includes(value)) {
+            alert("Column name already exists");
+            return;
           } else {
           setHeaders([...headers, value]);
           setState([...state, getItems(1, itemCount)]);
@@ -209,7 +215,7 @@ export default function Kanban() {
         type="button"
         onClick={() => {
           setState([...state, getItems(1, itemCount)]);
-          setHeaders([...headers, `New Group`]);
+          setHeaders([...headers, `New Group ${itemCount}`]);
           setItemCount(itemCount + 1);
         }}
       >
@@ -225,10 +231,12 @@ export default function Kanban() {
                   ref={provided.innerRef}
                   style={getListStyle(snapshot.isDraggingOver)}
                   {...provided.droppableProps}
-                >              
+                >  
+                <center style={{ marginLeft: "-160px"}}>            
                 <span className={styles.columnHeader} id={headers[ind]} onClick={(e)=> handleUpdateHeader(e)}>
                   {headers[ind] }
                 </span>
+                </center>
                 <input type="text" id={`${headers[ind]}-input`} key={ind}
                   onChange={(e) => setHeaderValue(e.target.value)}
                   onKeyDown={(e)=> handleKeyDown(e)} 
