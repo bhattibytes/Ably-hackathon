@@ -1,5 +1,7 @@
 {
   "name": "chat-app",
+  "author": "Jason Bhatti",
+  "contributors": [],
   "version": "0.1.0",
   "private": true,
   "scripts": {
