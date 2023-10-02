@@ -66,13 +66,15 @@ const AblyChatComponent = () => {
               <>
                 <img height={40} className={styles.messageImgMe} src={message.image.S}/>   
                 <span className={styles.messageMe} data-author={author}>
-                  <span className={styles.authorMe}>{author}<br/></span>{parsedMessage}
+                  <span className={styles.authorMe}>{author}<br/></span>
+                  <span className={styles.parsedMsgMe}>{parsedMessage}</span>
                 </span>     
               </>
               :
               <>
                 <span className={styles.message} data-author={author}> 
-                  <span id="other" className={styles.author}>{author}<br/></span>{parsedMessage}
+                  <span id="other" className={styles.author}>{author}<br/></span>
+                  <span className={styles.parsedMsg}>{parsedMessage}</span>
                 </span>
                 <img height={40} className={styles.messageImg} src={message.image.S}/>
               </>
@@ -89,7 +91,7 @@ const AblyChatComponent = () => {
     if (messageText !== '') {
       await channel.publish({ 
         name: channelName, 
-        data: `<strong>${messageText.slice(3, -4) + '</strong> <em>at</em> ' + '<em>'+ new Date().toLocaleString().split(',')[1]}</em>` 
+        data: `<strong>${messageText.slice(3, -4) + '</strong>' + '<em id="date">at '+ new Date().toLocaleString().split(',')[1]}</em>` 
       });
       setTimeout(() => { setMessagesFromDB(queryWithPartiQL()); }, 50);
     }
@@ -117,7 +119,7 @@ const AblyChatComponent = () => {
       newChannel.attach();
       newChannel.publish({ 
         name: value.toLowerCase(), 
-        data: `A New Channel named <strong>"${value.toLowerCase()}"</strong> was created <em> at ${new Date().toLocaleString().split(',')[1]}</em>` 
+        data: `A New Channel named <strong>"${value.toLowerCase()}"</strong> was created <em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>` 
       });
       newChannel.once("attached", () => {
         newChannel.history((err, page) => {
@@ -146,7 +148,7 @@ const AblyChatComponent = () => {
     newChannel.attach();
     newChannel.publish({ 
       name: newChannelName, 
-      data: `Switched to channel: <strong>"${newChannelName}"</strong> at ${new Date().toLocaleString().split(',')[1]}` 
+      data: `Switched to channel: <strong>"${newChannelName}"</strong> <em id="date">at ${new Date().toLocaleString().split(',')[1]}</em>` 
     });
       newChannel.history((err, page) => {
         let messages = page.items.reverse();

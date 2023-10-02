@@ -34,7 +34,7 @@ const move = (source, destination, droppableSource, droppableDestination) => {
 
   return result;
 };
-const grid = 8;
+const grid = 4;
 
 const getItemStyle = (isDragging, draggableStyle) => ({
   // some basic styles to make the items look a bit nicer
@@ -52,7 +52,7 @@ const getItemStyle = (isDragging, draggableStyle) => ({
 const getListStyle = isDraggingOver => ({
   background: isDraggingOver ? "#6e07f3" : "#defaf1",
   padding: grid,
-  width: 250,
+  width: 150,
   height: 620,
   overflow: "scroll",
   marginTop: "50px"
@@ -129,8 +129,7 @@ export default function Kanban() {
     }
   };
 
-  const handleKeyDown = (e) => {
-
+  const handleKeyDownHeaderEdit = (e) => {
     if (e.key === "Enter") {
       if (headers.includes(headerValue)) {
         alert("Column name already exists");
@@ -152,7 +151,7 @@ export default function Kanban() {
     }
   }
 
-  const handleClickEdit = (e) => {
+  const handleClickEditTaskTitle = (e) => {
     let input = document.getElementById(`${e.target.id}=input`);
     let taskElement = document.getElementById(`${e.target.id}=task`);
 
@@ -173,7 +172,7 @@ export default function Kanban() {
     }
   }
 
-  const handleKeyDownEdit = (e) => {
+  const handleKeyDownEditTaskTitle = (e) => {
     if (e.key === "Enter") {
       let taskElement = document.getElementById(`${e.target.id.split('=')[0]}=task`);
       
@@ -251,7 +250,7 @@ export default function Kanban() {
                 </center>
                 <input type="text" id={`${headers[ind]}-input`} key={ind}
                   onChange={(e) => setHeaderValue(e.target.value)}
-                  onKeyDown={(e)=> handleKeyDown(e)} 
+                  onKeyDown={(e)=> handleKeyDownHeaderEdit(e)} 
                   className={styles.columnHeaderInput}
                   style={{ display: 'none'}}
                   value={headerValue} 
@@ -299,7 +298,7 @@ export default function Kanban() {
                             <button
                               type="button"
                               className={styles.taskButton}
-                              onClick={(e) => {handleClickEdit(e)}}
+                              onClick={(e) => {handleClickEditTaskTitle(e)}}
                               id={item.id}
                             >
                               edit/save
@@ -310,7 +309,7 @@ export default function Kanban() {
                               style={{ display: 'none', height: '30px' }} 
                               value={task}
                               onChange={(e) => {setTask(e.target.value) }}
-                              onKeyDown={(e)=> handleKeyDownEdit(e)}
+                              onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}
                             />
                             <span className={styles.id}>id: {item.id.split('-')[1]}</span>
                           </div>

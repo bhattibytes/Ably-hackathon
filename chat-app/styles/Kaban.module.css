@@ -79,3 +79,45 @@
 .id {
   text-align: right;
 }
+
+@media screen and (max-width: 1700px) {
+  .kabanMain {
+    width: 700px;
+  }
+}
+
+@media screen and (max-width: 1600px) {
+  .kabanMain {
+    width: 600px;
+  }
+
+}
+
+@media screen and (max-width: 1450px) {
+  .kabanMain {
+    width: 500px;
+  }
+  .taskButton {
+    width: 80px;
+    height: 25px;
+    font-size: 12px;
+  }
+}
+
+
+@media screen and (max-width: 1020px) {
+ .kabanMain {
+  width: 400px;
+ }
+ .taskButton {
+  width: 60px;
+  height: 20px;
+  font-size: 10px;
+ }
+}
+
+@media screen and (max-width: 750px) {
+  .kabanMain {
+    width: 300px;
+  }
+}

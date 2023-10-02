@@ -1,3 +1,14 @@
 p.chatText {
   margin: -10px -10px -10px -10px;
 }
+
+span#other {
+  margin-left: calc(100% - 60px);
+}
+
+em#date{
+  color: black;
+  display: flex;
+  flex-direction: column;
+  font-size: 14px;
+}

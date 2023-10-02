@@ -64,11 +64,13 @@
 
 .author {
   font-weight: bold;
+  font-size: 18px;
   color: #6e07f3;
 }
 
 .authorMe {
   font-weight: bold;
+  font-size: 18px;
   color: #6ce4bc;
 }
 
@@ -94,8 +96,17 @@
   align-items: flex-start;
 }
 
+.parsedMsgMe {
+  font-size: 20px;
+}
+
+.parsedMsg {
+  font-size: 20px;
+}
+
 .messages:has(.messageMe) {
   align-self: flex-start;
+  color: white;
 }
 
 .messages:has(.message) {
@@ -157,8 +168,92 @@
   opacity: 0.5;
 }
 
-@media screen and (max-width: 1020px) {
+@media screen and (max-width: 1600px) {
   .chatHolder {
-    width: 100%;
+    width: 500px;
   }
 }
+
+
+@media screen and (max-width: 1020px) {
+  .chatHolder {
+    width: 400px;
+  }
+
+}
+
+@media screen and (max-width: 750px) {
+  .chatHolder {
+    width: 300px;
+  }
+
+  .chatCenter {
+    left: 150px;
+  }
+
+  .channels {
+    margin-left: 10px;
+  }
+
+  .channelTitle {
+    font-size: 20px;
+    margin-left: 0px;
+  }
+
+  .channelListItems {
+    font-size: 15px;
+  }
+
+  .chatText {
+    font-size: 15px;
+  }
+
+  .author {
+    font-size: 15px;
+  }
+
+  .authorMe {
+    font-size: 15px;
+  }
+
+  .message {
+    font-size: 15px;
+  }
+
+  .messageMe {
+    font-size: 15px;
+  }
+
+  .messages {
+    font-size: 15px;
+  }
+
+  .newChannelButton {
+    font-size: 15px;
+  }
+
+  .createChannelInput {
+    font-size: 15px;
+  }
+
+  .button {
+    font-size: 15px;
+  }
+
+  .button:hover {
+    font-size: 15px;
+  }
+
+  .button:disabled, 
+  .button:hover:disabled {
+    font-size: 15px;
+  }
+
+}
+
+@media screen and (max-width: 500px) {
+
+}
+
+
+
