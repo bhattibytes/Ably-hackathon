@@ -28,13 +28,16 @@ const AblyChatComponent = () => {
     });;
   }
 
-  const [channel, ably] = useChannel(`${channelName}`, async (message) => {
+  const [channel, ably] = useChannel(channelName, async (message) => {
     let messagesFromDBCall = [];
     setTimeout(async() => { messagesFromDBCall = await queryWithPartiQL(); }, 50);
     setTimeout(() => { 
-      if (Array.isArray(messagesFromDB) && Array.isArray(messagesFromDBCall)) { 
-        setMessagesFromDB((messagesFromDB)=>[...messagesFromDB, ...messagesFromDBCall, message]); 
-      }
+      
+        setMessagesFromDB((messagesFromDB)=> {
+          if (Array.isArray(messagesFromDB) && Array.isArray(messagesFromDBCall)) {
+            return [...messagesFromDB, ...messagesFromDBCall, message]; 
+          }
+        });
      }, 500);
   });
 
@@ -109,7 +112,7 @@ const AblyChatComponent = () => {
       setValue("");
     } else {
       setChannelName(value);
-      const newChannel = ably.channels.get(`[?rewind=2m&rewindLimit=10]${value}`);
+      const newChannel = ably.channels.get(value);
       newChannel.attach();
       newChannel.publish({ 
         name: value, 
@@ -138,7 +141,7 @@ const AblyChatComponent = () => {
       alert("You are already in this channel")
       return;
     } else {
-    const newChannel = ably.channels.get(`[?rewind=2m&rewindLimit=10]${newChannelName}`);
+    const newChannel = ably.channels.get(newChannelName);
     newChannel.attach();
     newChannel.publish({ 
       name: newChannelName, 
