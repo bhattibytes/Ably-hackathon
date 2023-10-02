@@ -30,23 +30,24 @@ const AblyChatComponent = () => {
 
   const [channel, ably] = useChannel(channelName, async (message) => {
     let messagesFromDBCall = [];
-    setTimeout(async() => { messagesFromDBCall = await queryWithPartiQL(); }, 50);
-    setTimeout(() => { 
-      
-        setMessagesFromDB((messagesFromDB)=> {
-          if (Array.isArray(messagesFromDB) && Array.isArray(messagesFromDBCall)) {
-            return [...messagesFromDB, ...messagesFromDBCall, message]; 
-          }
-        });
-     }, 500);
-  });
+    setTimeout(async() => { messagesFromDBCall = await queryWithPartiQL(); }, 10);
+    new Promise((resolve, reject) => {
+      resolve(messagesFromDBCall);
+    }).then (() => {
+      setMessagesFromDB((messagesFromDB)=> [...messagesFromDB, ...messagesFromDBCall]);
+      }).catch((error) => {
+        console.log('error: ', error);  
+        reject(error);
+      });
+    }
+  );
 
   useEffect(() => {
-    setMessagesFromDB(queryWithPartiQL());
+    setMessagesFromDB(async() => await queryWithPartiQL());
   }, []);
 
   var parsedMessages = [];
-  if (messagesFromDB.length && session && status === 'authenticated') {
+  if (messagesFromDB?.length && session && status === 'authenticated') {
       var sorted = messagesFromDB.sort((a, b) => new Date(a.timestamp.S).getTime() - new Date(b.timestamp.S).getTime() );
       sorted = sorted.filter((message) => message.channel ? message.channel.S === channelName : null );
       
@@ -107,22 +108,22 @@ const AblyChatComponent = () => {
   const createChannel = () => {
     if (value === '') {
       alert("Please enter a channel name")
-    } else if (channels.includes(value)) {
+    } else if (channels.includes(value.toLowerCase())) {
       alert("This channel already exists")
       setValue("");
     } else {
-      setChannelName(value);
-      const newChannel = ably.channels.get(value);
+      setChannelName(value.toLowerCase());
+      const newChannel = ably.channels.get(value.toLowerCase());
       newChannel.attach();
       newChannel.publish({ 
-        name: value, 
-        data: `A New Channel named <strong>"${value}"</strong> was created <em> at ${new Date().toLocaleString().split(',')[1]}</em>` 
+        name: value.toLowerCase(), 
+        data: `A New Channel named <strong>"${value.toLowerCase()}"</strong> was created <em> at ${new Date().toLocaleString().split(',')[1]}</em>` 
       });
       newChannel.once("attached", () => {
         newChannel.history((err, page) => {
           const messages = page.items.reverse();
           setMessagesFromDB([...messages]);
-          setChannels((channels)=>[...channels, value]);
+          setChannels((channels)=>[...channels, value.toLowerCase()]);
         });
         setTimeout(() => { setMessagesFromDB(queryWithPartiQL()); }, 50);
         setValue("");
@@ -149,7 +150,11 @@ const AblyChatComponent = () => {
     });
       newChannel.history((err, page) => {
         let messages = page.items.reverse();
-        setMessagesFromDB((messagesFromDB)=>[...messagesFromDB, ...messages]);
+        setMessagesFromDB((messagesFromDB)=>{
+          if (Array.isArray(messagesFromDB)) {
+            return [...messagesFromDB, ...messages]
+          }
+        });
       });
     }
   }
