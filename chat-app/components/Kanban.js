@@ -42,6 +42,7 @@ const getItemStyle = (isDragging, draggableStyle) => ({
   padding: grid * 2,
   margin: `0 0 ${grid}px 0`,
   borderRadius: "5px",
+  boxShadow: `inset 0 0 10px`,
 
   // change background colour if dragging
   background: isDragging ? "#5BE9B9" : "grey",
@@ -192,11 +193,12 @@ export default function Kanban() {
     // console.log('state: ', state),
     // console.log('headers: ', headers),
     <div className={styles.kabanMain}>
-      <h1>Ably Collaboration App</h1>
+      <h1>TrackChat - App</h1>
       <input 
         className={styles.inputNewGroup}
         type="text" 
         placeholder="Enter New Group Name" 
+        maxLength={17}
         id="new-column-name" 
         onChange={(e) => setValue(e.target.value)} 
         value={value}
@@ -248,7 +250,12 @@ export default function Kanban() {
                   {headers[ind] }
                 </span>
                 </center>
-                <input type="text" id={`${headers[ind]}-input`} key={ind}
+                <input 
+                  type="text" 
+                  id={`${headers[ind]}-input`} 
+                  key={ind}
+                  placeholder={`Edit header title...`}
+                  maxLength={17}
                   onChange={(e) => setHeaderValue(e.target.value)}
                   onKeyDown={(e)=> handleKeyDownHeaderEdit(e)} 
                   className={styles.columnHeaderInput}
@@ -276,9 +283,23 @@ export default function Kanban() {
                           >
                             <span className={styles.taskTitle} id={`${item.id}=task`}>{item.content}</span>
                             <button
+                              type="button"
                               className={styles.taskButton}
+                              onClick={(e) => {handleClickEditTaskTitle(e)}}
+                              id={item.id}
+                            >
+                              edit | save
+                            </button>
+                            <button
+                              className={styles.taskButtonDelete}
                               type="button"
                               onClick={() => {
+                                var txt = "Are you sure you want to delete this task?";
+                                if (confirm(txt)) {
+                                  console.log("delete");
+                                } else {
+                                  return;
+                                }
                                 const newState = [...state];
                                 newState[ind].splice(index, 1);
                                 setState(
@@ -295,18 +316,12 @@ export default function Kanban() {
                             >
                               delete
                             </button>
-                            <button
-                              type="button"
-                              className={styles.taskButton}
-                              onClick={(e) => {handleClickEditTaskTitle(e)}}
-                              id={item.id}
-                            >
-                              edit/save
-                            </button>
                             <input type="text" 
                               id={`${item.id}=input`} 
                               key={ind} 
-                              style={{ display: 'none', height: '30px' }} 
+                              style={{ display: 'none' }}
+                              placeholder={`Edit task title ${item.id.split('-')[1]}`}
+                              className={styles.taskInput} 
                               value={task}
                               onChange={(e) => {setTask(e.target.value) }}
                               onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}

@@ -13,7 +13,7 @@ const AblyChatComponent = () => {
   const [messageText, setMessageText] = useState("");
   const [value, setValue] = useState("");
   const [channelName, setChannelName] = useState("home");
-  const [channels, setChannels] = useState(["home", "general", "random", "help"]);
+  const [channels, setChannels] = useState(["home", "charla", "general", "random", "help", "dev"]);
   const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
 
@@ -31,13 +31,13 @@ const AblyChatComponent = () => {
   const [channel, ably] = useChannel(channelName, async (message) => {
     let messagesFromDBCall = [];
     setTimeout(async() => { messagesFromDBCall = await queryWithPartiQL(); }, 10);
-    new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
       resolve(messagesFromDBCall);
+    }).catch((error) => {
+      console.log('error: ', error);  
+      reject(error);
     }).then (() => {
       setMessagesFromDB((messagesFromDB)=> [...messagesFromDB, ...messagesFromDBCall]);
-      }).catch((error) => {
-        console.log('error: ', error);  
-        reject(error);
       });
     }
   );
@@ -123,8 +123,13 @@ const AblyChatComponent = () => {
       });
       newChannel.once("attached", () => {
         newChannel.history((err, page) => {
-          const messages = page.items.reverse();
-          setMessagesFromDB([...messages]);
+          setMessagesFromDB((messagesFromDB)=>{
+            if (Array.isArray(messagesFromDB)) {
+              return [...messagesFromDB, ...page.items.reverse()]
+            } else {
+              return [...page.items.reverse()]
+            }
+          });
           setChannels((channels)=>[...channels, value.toLowerCase()]);
         });
         setTimeout(() => { setMessagesFromDB(queryWithPartiQL()); }, 50);
@@ -186,6 +191,7 @@ const AblyChatComponent = () => {
           id="create-channel" 
           type="text" 
           placeholder="Enter Channel Name"
+          maxLength={14}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => {

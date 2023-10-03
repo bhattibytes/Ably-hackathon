@@ -41,20 +41,21 @@
   position: absolute;
   top: 120px;
   font-weight: bold;
+  text-decoration: underline;
   border: 2px solid #eee;
+  margin-left: 10px;
   border-radius: 5px;
-  padding-left: 20px;
-  padding-right: 20px;
-  margin-left: auto;
-  line-height: 3;
+  padding-left: 10px;
+  padding-right: 10px;
+  line-height: 2;
   color: white;
   background: linear-gradient(90deg,  #aa53f2 0%, 62%, #7061f1 100%);
 }
 
 .columnHeaderInput {
   position: absolute;
-  width: 190px;
-  height: 25px;
+  height: 20px;
+  top: 155px
 }
 
 .taskCard {
@@ -70,10 +71,33 @@
   margin-bottom: 0;
 }
 
+.taskInput {
+  height: 20px; 
+  width: 90%;
+  position: relative;
+  bottom: 90px;
+}
+
 .taskButton {
-  width: 100px;
+  width: 80px;
+  font-weight: bold;
+  font-size: 12px;
+  align-self: center;
   height: 30px;
   border-radius: 5px;
+  background-color: white;
+  margin-bottom: 1px;
+  box-shadow: inset 0 0 5px;
+}
+
+.taskButtonDelete {
+  width: 80px;
+  align-self: center;
+  height: 30px;
+  border-radius: 5px;
+  background-color: rgb(197, 0, 0);
+  color: white;
+  box-shadow: inset 0 0 30px #9f0707; 
 }
 
 .id {
@@ -83,6 +107,9 @@
 @media screen and (max-width: 1700px) {
   .kabanMain {
     width: 700px;
+  }
+  .columnHeader {
+    font-size: 12px;
   }
 }
 
@@ -97,10 +124,14 @@
   .kabanMain {
     width: 500px;
   }
-  .taskButton {
+  .taskButton & .taskButtonDelete {
     width: 80px;
     height: 25px;
     font-size: 12px;
+  }
+
+  .columnHeader {
+    font-size: 10px;
   }
 }
 
@@ -109,7 +140,7 @@
  .kabanMain {
   width: 400px;
  }
- .taskButton {
+ .taskButton & .taskButtonDelete {
   width: 60px;
   height: 20px;
   font-size: 10px;

@@ -1,18 +1,28 @@
 .channelTitle {
-  font-size: 30px;
+  font-size: 24px;
   margin-left: 0px;
+  text-decoration: wavy underline;
+  color: white;
 }
 
 .channels {
   position: absolute;
   left: 0;
   margin-left: 30px;
+  background-color: #6e07f3;
+  padding-bottom: 15px;
+  padding-top: 15px;
+  border-radius: 15px;
+  padding-left: 20px;
+  padding-right: 20px;
+  color: white;
 }
 
 .hashTag {
   position: absolute;
   text-align: left;
-  left: 0;
+  left: 10px;
+  color: #5BE9B9;
 }
 
 .channelListItems {
@@ -23,7 +33,7 @@
 }
 
 .channelListItems:hover {
-  background-color: #eee;
+  background-color: #5BE9B9;
   border-radius: 5px;
 }
 
