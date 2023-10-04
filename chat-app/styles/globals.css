@@ -12,3 +12,9 @@ em#date{
   flex-direction: column;
   font-size: 14px;
 }
+
+html {
+  background-image: url('../assets/bg.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+}

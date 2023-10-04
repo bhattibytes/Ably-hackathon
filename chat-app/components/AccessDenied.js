@@ -1,10 +1,14 @@
 import { signIn } from 'next-auth/react';
 import styles from '../styles/Home.module.css';
+import github from '../assets/GitHub.jpeg';
+import twitter from '../assets/Twitter.png';
+import google from '../assets/Google.png';
+import Image from 'next/image';
 
 export default function AccessDenied () {
   return (
     <div className={styles.accessDenied}>
-      <h1>Welcome to the TrackChat - App</h1>
+      <h1 className={styles.welcomeMsg}>WELCOME TO TRACKCHAT</h1>
       <div>
         <a href="/api/auth/signin"
            className={styles.clickHere}
@@ -12,7 +16,11 @@ export default function AccessDenied () {
            e.preventDefault()
            signIn()
         }}>
-          <h3>👉 Click Here to Connect with Google, GitHub, or Twitter 👈</h3>
+          <Image className={styles.logInImg} src={google} width={300}/>
+          <br/>
+          <Image className={styles.logInImg} src={twitter} width={300}/>
+          <br/>
+          <Image className={styles.logInImg} src={github} width={300}/>
         </a>
       </div>
     </div>

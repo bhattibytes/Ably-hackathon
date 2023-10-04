@@ -24,12 +24,29 @@
 }
 
 .accessDenied {
-  border: 5px solid;
+  position: absolute;
+  top: 0;
   margin: auto;
-  width: 50%;
-  padding: 10px;
-  border-radius: 25px;
+  width: 100%;
+  height: 100%;
+  padding: 30px;
   text-align: center;
+  background-image: url('../assets/bg.png');
+  background-repeat: no-repeat;
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+}
+
+.accessDenied h1 {
+  font-size: 64px;
+  color: white;
+  font-family: 'Oswald', sans-serif;
+}
+
+.logInImg {
+  margin-top: 10px;
+  border-radius: 15px;
 }
 
 .clickHere {
@@ -55,6 +72,41 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  color: white;
+  font-size: 24px;
+}
+
+.profilePage h1 {
+  font-size: 64px;
+  color: white;
+  font-family: 'Oswald', sans-serif;
+}
+
+.profilePage p {
+  color: #6e07f3;
+  font-weight: 800;
+}
+
+.profilePage span {
+  color: white;
+  font-weight: 300;
+}
+
+.linkOut {
+  text-decoration: none;
+  color: white;
+  font-size: 24px;
+}
+
+.btn {
+  border: 1px solid white;
+  border-radius: 15px;
+  width: 300px;
+  background-color: #6e07f3;
+}
+
+.btn:hover {
+  background-color: #5BE9B9;
 }
 
 .footer {

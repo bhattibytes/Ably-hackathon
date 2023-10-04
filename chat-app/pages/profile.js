@@ -7,11 +7,12 @@ export default function Profile() {
   return (
     <div className={styles.profilePage}>
       <h1>My Profile</h1>
-      <p>Name: {session?.user?.name}</p>
-      <p>Email: {session?.user?.email}</p>
+      <p>Name: <span>{session?.user?.name}</span></p>
+      <p>Email: <span>{session?.user?.email}</span></p>
       <p><img src={session?.user?.image} height={150} style={{ borderRadius: "100px"}}/></p>
-      <a href='/api/auth/signout'>&nbsp;Sign Out</a> &nbsp;|&nbsp;
-      <a href='/'>&nbsp;Back to Home</a>
+      <button className={styles.btn}><a className={styles.linkOut} href='/api/auth/signout'>Sign Out</a></button>
+      <br/>
+      <button className={styles.btn}><a className={styles.linkOut} href='/'>Back to Home</a></button>
     </div>
   )
 }
