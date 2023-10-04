@@ -11,7 +11,9 @@ export default function AccessDenied () {
            onClick={(e) => {
            e.preventDefault()
            signIn()
-        }}><h3>👉 Click Here to Connect with Google 👈</h3></a>
+        }}>
+          <h3>👉 Click Here to Connect with Google, GitHub, or Twitter 👈</h3>
+        </a>
       </div>
     </div>
   )

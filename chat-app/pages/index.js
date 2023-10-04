@@ -25,7 +25,7 @@ export default function Home() {
         
         <main className={styles.main}>
           <div className={styles.welcome}>
-            <img className={styles.welcomeImg} src={session.user.image} />
+            <img className={styles.welcomeImg} src={session.user.image} width={75} height={75}/>
             &nbsp;&nbsp;<h1>Welcome {session.user.name.split(' ')[0]} &nbsp;
               <a className={styles.links} href='/profile'>Profile |</a>
               <a className={styles.links} href='/api/auth/signout'>&nbsp;Sign Out</a>
