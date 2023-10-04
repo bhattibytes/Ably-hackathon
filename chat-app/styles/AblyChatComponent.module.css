@@ -37,8 +37,13 @@
   border-radius: 5px;
 }
 
+.channelHeading {
+  margin-top: 0px;
+}
+
 .createChannel {
-  margin-bottom: 10px;
+  margin-top: -15px;
+  margin-bottom: 5px;
 }
 
 .chatCenter {

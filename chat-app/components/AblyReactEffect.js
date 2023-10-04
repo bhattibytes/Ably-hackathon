@@ -13,16 +13,16 @@ AWS.config.update({
 export const docClient = new AWS.DynamoDB.DocumentClient({ convertEmptyValues: true });
 export const dynamodb = new AWS.DynamoDB({ convertEmptyValues: true });
 
-const ably = new Ably.Realtime.Promise({ authUrl: '/api/createTokenRequest' });
+const realtime = new Ably.Realtime.Promise({ authUrl: '/api/createTokenRequest' });
 
 export function useChannel(channelName, callbackOnMessage) {
-  const channel = ably.channels.get(`${channelName}`);
+  const channel = realtime.channels.get(channelName);
   const { data: session, status } = useSession();
   
   const onMount = () => {
    
     channel.subscribe(msg => { 
-      if (session && status === 'authenticated' && msg.connectionId === ably.connection.id) {
+      if (session && status === 'authenticated' && msg.connectionId === realtime.connection.id) {
         dynamodb.putItem({
           TableName: 'ably_users',
           Item: {
@@ -34,7 +34,7 @@ export function useChannel(channelName, callbackOnMessage) {
             'channel': { S: msg.name },
             'author': { S: session.user.name.split(' ')[0] },
             'timestamp': { S: new Date().toISOString() },
-            'connectionId': { S: ably.connection.id },
+            'connectionId': { S: realtime.connection.id },
             'msgId': { S: msg.id },
             'clientId': { S: msg.clientId },
           }
@@ -61,5 +61,5 @@ export function useChannel(channelName, callbackOnMessage) {
 
   useEffect(useEffectHook);
 
-  return [channel, ably];
+  return [channel, realtime];
 }

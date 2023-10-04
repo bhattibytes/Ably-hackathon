@@ -16,11 +16,11 @@ export default function AccessDenied () {
            e.preventDefault()
            signIn()
         }}>
-          <Image className={styles.logInImg} src={google} width={300}/>
+          <Image className={styles.logInImg} alt={"google"} src={google} width={300}/>
           <br/>
-          <Image className={styles.logInImg} src={twitter} width={300}/>
+          <Image className={styles.logInImg} alt={"twitter"} src={twitter} width={300}/>
           <br/>
-          <Image className={styles.logInImg} src={github} width={300}/>
+          <Image className={styles.logInImg} alt={"github"} src={github} width={300}/>
         </a>
       </div>
     </div>

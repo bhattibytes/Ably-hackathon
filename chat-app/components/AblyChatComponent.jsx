@@ -16,6 +16,7 @@ const AblyChatComponent = () => {
   const [channels, setChannels] = useState(["home", "charla", "general", "random", "help", "dev"]);
   const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
+  const [members, setMembers] = useState([]);
 
   async function queryWithPartiQL() {
     const statement = 'SELECT * FROM "ably_users"';
@@ -28,7 +29,7 @@ const AblyChatComponent = () => {
     });;
   }
 
-  const [channel, ably] = useChannel(channelName, async (message) => {
+  const [channel, realtime] = useChannel(channelName, async (message) => {
     let messagesFromDBCall = [];
     setTimeout(async() => { messagesFromDBCall = await queryWithPartiQL(); }, 10);
     return new Promise((resolve, reject) => {
@@ -43,6 +44,29 @@ const AblyChatComponent = () => {
   );
 
   useEffect(() => {
+    channel.presence.enterClient('ably-nextjs-chat', 
+    {email: session.user.email, image: session.user.image, author: session.user.name} , 
+    function(err) {   
+      if (err) {
+        console.log('error: ', err);  
+      }
+    });
+
+    channel.presence.subscribe('enter', function(member) {
+      console.log(member.data.author + ' entered realtime-chat');
+      setMembers((members)=> [...members, member.data.image]);
+      console.log('outside setMembers', members);
+    });
+
+    channel.presence.get(function(err, members) {
+      if (err) {
+        console.log('error: ', err);  
+      } else {
+        console.log('members: ', members);
+        setMembers(members.map((member) => member.data.image));
+      }
+    });
+  
     setMessagesFromDB(async() => await queryWithPartiQL());
   }, []);
 
@@ -115,7 +139,7 @@ const AblyChatComponent = () => {
       setValue("");
     } else {
       setChannelName(value.toLowerCase());
-      const newChannel = ably.channels.get(value.toLowerCase());
+      const newChannel = realtime.channels.get(value.toLowerCase());
       newChannel.attach();
       newChannel.publish({ 
         name: value.toLowerCase(), 
@@ -149,7 +173,7 @@ const AblyChatComponent = () => {
       alert("You are already in this channel")
       return;
     } else {
-    const newChannel = ably.channels.get(newChannelName);
+    const newChannel = realtime.channels.get(newChannelName);
     newChannel.attach();
     newChannel.publish({ 
       name: newChannelName, 
@@ -184,7 +208,13 @@ const AblyChatComponent = () => {
       )}
       </h1>
       <center className={styles.chatCenter}>
-        <h1>"{channelName}"</h1>
+        <div>
+          <p>Users Online</p>
+          { Array.from(new Set(members)).map((member, index) => {
+            return <img src={member} key={index} height={30} style={{ borderRadius: "25px" }}  /> 
+          })}
+        </div>
+        <h1 className={styles.channelHeading}>"{channelName}"</h1>
         <div className={styles.createChannel}>
           <input 
           className={styles.createChannelInput}
