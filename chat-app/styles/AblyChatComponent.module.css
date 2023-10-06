@@ -8,6 +8,7 @@
 .channels {
   position: absolute;
   left: 0;
+  top: 110px;
   margin-left: 30px;
   background-color: #6e07f3;
   padding-bottom: 15px;
@@ -75,6 +76,17 @@
   overflow-y: auto;
   background-color: #f2f2f2;
   border-radius: 20px;
+}
+
+.typeIndicator {
+  display: flex;
+  flex-direction: row;
+  height: 30px;
+}
+
+.typeIndicator:has(span) {
+  /* color: white; */
+  font-size: 22px;
 }
 
 .author {

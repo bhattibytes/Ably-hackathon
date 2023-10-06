@@ -17,6 +17,7 @@ const AblyChatComponent = () => {
   const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
   const [members, setMembers] = useState([]);
+  const [membersTyping, setMembersTyping] = useState([]);
 
   async function queryWithPartiQL() {
     const statement = 'SELECT * FROM "ably_users"';
@@ -43,9 +44,60 @@ const AblyChatComponent = () => {
     }
   );
 
+  const typingIndicator = (content) => {
+    if (content !== '') {
+      channel.presence.enterClient('ably-nextjs-chat', 
+      {email: session.user.email, image: session.user.image, author: session.user.name, isTyping: true}, 
+      function(err) {   
+        if (err) {
+          console.log('error: ', err);  
+        }
+      });
+      channel.presence.get(function(err, members) {
+        if (err) {
+          console.log('error: ', err);  
+        } else {
+          setMembersTyping(members.map((member) => member.data));
+        }
+      });
+      channel.presence.subscribe('enter', function(member) {
+        setMembers((members)=> {
+          members.push(member.data.image);
+          members = Array.from(new Set(members));
+          return [...members]
+        });
+      })
+    } else {
+      channel.presence.leaveClient('ably-nextjs-chat', 
+      {email: session.user.email, image: session.user.image, author: session.user.name, isTyping: false}, 
+      function(err) {   
+        if (err) {
+          console.log('error: ', err);  
+        }
+      });
+    }
+  }
+
+  const getPresenceTyping = (content) => {
+    if (content !== '') {
+    channel.presence.get(function(err, members) {
+      if (err) {
+        console.log('error: ', err);  
+      } else {
+        setMembersTyping(members.filter((member) => member.data.isTyping).map((member) => member.data.author));
+      }
+    });
+    } else {
+      channel.presence.leaveClient('ably-nextjs-chat', {email: session.user.email, image: session.user.image, author: session.user.name, isTyping: false}, function(err) {   
+        if (err) {
+          console.log('error: ', err);  
+        }
+      });
+    }
+  }
   useEffect(() => {
     channel.presence.enterClient('ably-nextjs-chat', 
-    {email: session.user.email, image: session.user.image, author: session.user.name} , 
+    {email: session.user.email, image: session.user.image, author: session.user.name, isTyping: false}, 
     function(err) {   
       if (err) {
         console.log('error: ', err);  
@@ -53,22 +105,31 @@ const AblyChatComponent = () => {
     });
 
     channel.presence.subscribe('enter', function(member) {
-      console.log(member.data.author + ' entered realtime-chat');
-      setMembers((members)=> [...members, member.data.image]);
-      console.log('outside setMembers', members);
+      setMembers((members)=> {
+        members.push(member.data.image);
+        members = Array.from(new Set(members));
+        return [...members]
+      });
     });
 
     channel.presence.get(function(err, members) {
       if (err) {
         console.log('error: ', err);  
       } else {
-        console.log('members: ', members);
         setMembers(members.map((member) => member.data.image));
       }
     });
+    if (!session) { channel.presence.enterClient('ably-nextjs-chat', 
+        {email: session.user.email, image: session.user.image, author: session.user.name, isTyping: false}, 
+        function(err) {   
+          if (err) {
+            console.log('error: ', err);  
+          }
+        });
+      }
   
     setMessagesFromDB(async() => await queryWithPartiQL());
-  }, []);
+  }, [session]);
 
   var parsedMessages = [];
   if (messagesFromDB?.length && session && status === 'authenticated') {
@@ -234,6 +295,19 @@ const AblyChatComponent = () => {
           />
           <button className={styles.newChannelButton} onClick={createChannel}>Create New Channel</button>
         </div>
+        <div className={styles.typeIndicator}>
+          {messageText !== '' ? (
+          <>
+            <div>
+              { membersTyping.length < 3 ? membersTyping.map((member, index) => member.isTyping ? <span key={index}>{member.author}&nbsp;{index === 0 && membersTyping.length > 1 ? <span>&</span> : null} </span> : null) :  
+              <span>{ membersTyping[0].author }&nbsp;<span>&</span>&nbsp;{ membersTyping[1].author }</span>
+              }  
+            </div>
+            <img src="https://www.slicktext.com/images/common/typing-indicator-loader.gif" height={20}/> 
+          </>
+          )
+          : null}
+        </div>
         <div className={styles.chatHolder}>
           <div className={styles.chatText}>
             {parsedMessages}
@@ -270,7 +344,11 @@ const AblyChatComponent = () => {
                   'undo redo | formatselect | bold italic backcolor | \
                   emoticons | link | code |  removeformat \ '
               }}
-              onEditorChange={(content, editor) => setMessageText(content)}
+              onEditorChange={(content, editor) => {
+                getPresenceTyping(content);
+                typingIndicator(content);
+                return setMessageText(content)
+              }}
             />
             <button type="submit" className={styles.button}>Send</button>
           </form>
