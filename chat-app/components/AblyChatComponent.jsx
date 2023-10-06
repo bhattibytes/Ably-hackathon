@@ -258,6 +258,25 @@ const AblyChatComponent = () => {
   return (
     <>
       <h1 className={styles.channels}>
+      <div className={styles.createChannel}>
+          <input 
+          className={styles.createChannelInput}
+          id="create-channel" 
+          type="text" 
+          placeholder="Enter Channel Name"
+          maxLength={14}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key == "Enter") {
+              e.preventDefault();
+              createChannel();
+              setValue("");
+            }
+          }}
+          />
+          <button className={styles.newChannelButton} onClick={createChannel}>Create Channel</button>
+        </div>
       <span className={styles.channelTitle}>CHANNELS</span>
       {channels.map((channel, index) => 
       <span key={index}>
@@ -276,25 +295,6 @@ const AblyChatComponent = () => {
           })}
         </div>
         <h1 className={styles.channelHeading}>"{channelName}"</h1>
-        <div className={styles.createChannel}>
-          <input 
-          className={styles.createChannelInput}
-          id="create-channel" 
-          type="text" 
-          placeholder="Enter Channel Name"
-          maxLength={14}
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key == "Enter") {
-              e.preventDefault();
-              createChannel();
-              setValue("");
-            }
-          }}
-          />
-          <button className={styles.newChannelButton} onClick={createChannel}>Create New Channel</button>
-        </div>
         <div className={styles.typeIndicator}>
           {messageText !== '' ? (
           <>

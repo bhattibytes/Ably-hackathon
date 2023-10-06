@@ -8,7 +8,7 @@
 .channels {
   position: absolute;
   left: 0;
-  top: 110px;
+  top: 85px;
   margin-left: 30px;
   background-color: #6e07f3;
   padding-bottom: 15px;
@@ -43,8 +43,9 @@
 }
 
 .createChannel {
-  margin-top: -15px;
-  margin-bottom: 5px;
+  display: flex;
+  flex-direction: column;
+  width: 140px;
 }
 
 .chatCenter {
@@ -85,7 +86,6 @@
 }
 
 .typeIndicator:has(span) {
-  /* color: white; */
   font-size: 22px;
 }
 
@@ -161,7 +161,7 @@
 .newChannelButton {
   border-radius: 5px;
   color: white;
-  font-size: 1.1em;
+  font-size: 14px;
   background: linear-gradient(to right, #6e07f3, #5BE9B9);
   margin-left: 5px;
 }
