@@ -1,17 +1,23 @@
+.heading{
+  color: #6e07f3;
+  text-align: center  ;
+}
+
 .kabanMain {
   position: absolute;
-  left: 820px;
+  left: 80px;
 }
 
 .columnsContainer {
   display: flex;
   flex-direction: row;
-  width: 800px;
+  width: 1200px;
   overflow: scroll;
 }
 
 .kanbanBoard {
   display: flex; 
+  width: 1000px;
   border: 5px solid #defaf1;
   border-radius: 10px;
   margin-top: 2px;
