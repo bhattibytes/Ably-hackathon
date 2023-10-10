@@ -1,18 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import styles from "../styles/Kaban.module.css";
-import { v4 as uuidv4 } from 'uuid';
-import AWS from 'aws-sdk';
 
-
-AWS.config.update({
-  region: 'us-east-2',
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-});
-
-
-const dynamodb = new AWS.DynamoDB({ convertEmptyValues: true });
 
 // fake data generator
 const getItems = (count, offset = 0) =>
@@ -70,51 +59,13 @@ const getListStyle = isDraggingOver => ({
   marginTop: "50px"
 });
 
-export default function Kanban({ id, s, h, ic }) {
+export default function Kanban() {
   const [state, setState] = useState([]);
   const [value, setValue] = useState("");
   const [headerValue, setHeaderValue] = useState("");
   const [headers, setHeaders] = useState([]);
   const [task , setTask] = useState('');
   const [itemCount, setItemCount] = useState(40);
-  
-  useEffect(() => {
-      updateItemToDynamoDB(id);
-  }, [state, headers, itemCount]); 
-
-
-  const updateItemToDynamoDB = (itemId) => {
-  try {
-    const params = {
-      TableName: 'ably_kanban',
-      Key: {
-        id: { S: itemId }, 
-      },
-      UpdateExpression: 'SET #state = :newState, #headers = :newHeaders, #itemCount = :newItemCount',
-      ExpressionAttributeNames: {
-        '#state': 'state',
-        '#headers': 'headers',
-        '#itemCount': 'itemCount',
-      },
-      ExpressionAttributeValues: {
-        ':newState': { S: JSON.stringify(state) }, 
-        ':newHeaders': { S: JSON.stringify(headers) }, 
-        ':newItemCount': { N: itemCount.toString() }, 
-      },
-      ReturnValues: 'ALL_NEW', 
-    };
-
-    dynamodb.updateItem(params, function (err, data) {
-      if (err) {
-        console.error('Error updating item in DynamoDB:', err);
-      } else {
-        console.log('Item updated in DynamoDB:', data.Attributes);
-      }
-    });
-  } catch (error) {
-    console.error('Error preparing item for DynamoDB update:', error);
-  }
-};
 
   function onDragEnd(result) {
     const { source, destination } = result;
@@ -202,67 +153,40 @@ export default function Kanban({ id, s, h, ic }) {
   }
 
   const handleClickEditTaskTitle = (e) => {
-    const inputId = `${e.target.id}=input`;
-    const taskElementId = `${e.target.id}=task`;
-  
-    const input = document.getElementById(inputId);
-    const taskElement = document.getElementById(taskElementId);
-  
-    input.style.display = input.style.display === "none" ? "" : "none";
-  
-    const id = e.target.id;
+    let input = document.getElementById(`${e.target.id}=input`);
+    let taskElement = document.getElementById(`${e.target.id}=task`);
+
+    if (input.style.display === "none") {
+      input.style.display = "";
+    } else {
+      input.style.display = "none";
+    }
+
+    if (task === "") {
+      return;
+    }
+
+    taskElement.innerHTML = task;
+
     if (task !== "") {
-      const newState = state.map((row) =>
-        row.map((item) => {
-          if (item.id === id) {
-            return { ...item, content: task };
-          }
-          return item;
-        })
-      );
-      setState(newState);
-      taskElement.innerHTML = task;
       setTask("");
     }
-  };
-  
-  // after,I edit task title click Enter, the state is not updated; check later
+  }
+
   const handleKeyDownEditTaskTitle = (e) => {
     if (e.key === "Enter") {
       let taskElement = document.getElementById(`${e.target.id.split('=')[0]}=task`);
-      let taskInput = document.getElementById(`${e.target.id}`);
-  
-      if (!taskInput) return; 
-  
+      
       e.target.style.display = "none";
-      const newTaskTitle = taskInput.value; 
-  
-      const newState = [...state];
-      const id = e.target.id;
-  
-      for (let i = 0; i < newState.length; i++) {
-        for (let j = 0; j < newState[i].length; j++) {
-          if (newState[i][j].id === id) {
-            newState[i][j].content = newTaskTitle; 
-            setState(newState);
-          }
-        }
-      }
-  
-      taskElement.innerHTML = newTaskTitle;
-      taskInput.value = ""; 
+      taskElement.innerHTML = task;
+
+      setTask("");
     }
-  };
-  
-  // useEffect(() => {
-  //   setState([getItems(10), getItems(10, 10), getItems(10, 20), getItems(10, 30)]);
-  //   setHeaders(["Click to Edit 1", "Click to Edit 2", "Click to Edit 3", "Click to Edit 4"]);
-  // }, []);
-  
+  }
+
   useEffect(() => {
-    setState(s);
-    setHeaders(h);
-    setItemCount(ic);
+    setState([getItems(10), getItems(10, 10), getItems(10, 20), getItems(10, 30)]);
+    setHeaders(["Click to Edit 1", "Click to Edit 2", "Click to Edit 3", "Click to Edit 4"]);
   }, []);
 
   return (
@@ -398,9 +322,9 @@ export default function Kanban({ id, s, h, ic }) {
                               style={{ display: 'none' }}
                               placeholder={`Edit task title ${item.id.split('-')[1]}`}
                               className={styles.taskInput} 
-                              onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}
                               value={task}
                               onChange={(e) => {setTask(e.target.value) }}
+                              onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}
                             />
                             <span className={styles.id}>id: {item.id.split('-')[1]}</span>
                           </div>
@@ -415,33 +339,8 @@ export default function Kanban({ id, s, h, ic }) {
           )): null }
         </DragDropContext>
       </div>
+      <a href="/"><h1>CHAT HOME</h1></a>
     </div>
   );
 }
 
-
-
-
-   const insertItemToDynamoDB = async () => {
-    try {
-      const params = {
-        TableName: 'ably_kanban',
-        Item: {
-          'id': { S: uuidv4() },
-          'state': { SS: JSON.stringify(state) }, 
-          'headers': { SS: JSON.stringify(headers) }, 
-          'itemCount': { N: itemCount.toString() },
-        },
-      };
-  
-      dynamodb.putItem(params, function(err, data) {
-        if (err) {
-          console.error('Error inserting item into DynamoDB:', err);
-        } else {
-          console.log('Item inserted into DynamoDB:', params.Item);
-        }
-      });
-    } catch (error) {
-      console.error('Error preparing item for DynamoDB:', error);
-    }
-  };

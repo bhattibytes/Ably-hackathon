@@ -4,6 +4,7 @@ import styles from '../styles/AblyChatComponent.module.css';
 import { Editor } from '@tinymce/tinymce-react';
 import parse from 'html-react-parser';
 import { useSession } from 'next-auth/react';
+import { v4 as uuidv4 } from 'uuid';
 
 const dynamodb = new AWS.DynamoDB({ convertEmptyValues: true });
 
@@ -14,6 +15,7 @@ const AblyChatComponent = () => {
   const [value, setValue] = useState("");
   const [channelName, setChannelName] = useState("home");
   const [channels, setChannels] = useState(["home", "charla", "general", "random", "help", "dev"]);
+  const [privateChannels, setPrivateChannels] = useState([]);
   const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
   const [members, setMembers] = useState([]);
@@ -24,6 +26,23 @@ const AblyChatComponent = () => {
     return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
       if (data.Items.length) {
         setMessagesFromDB(data.Items);
+      }
+    }).catch((error) => {
+      console.log('error: ', error);  
+    });;
+  }
+
+  async function queryChannelsWithPartiQL() {
+    const statement = 'SELECT * FROM "ably_channels"';
+    return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
+      if (data.Items.length) {
+        let channelsFromDB = [];
+        data.Items.forEach((item) => {
+          if (item.channelOwner.S === session.user.email && item.channelMembers.SS.includes(session.user.name)) {
+            channelsFromDB.push(item.channelName.S);
+          }
+        });
+        setPrivateChannels([...channelsFromDB]);
       }
     }).catch((error) => {
       console.log('error: ', error);  
@@ -43,6 +62,32 @@ const AblyChatComponent = () => {
       });
     }
   );
+
+  const saveChannelToDB = async (channelName) => {
+    if (privateChannels.includes(channelName)) {
+      alert("This channel already exists")
+      return;
+    }
+    dynamodb.putItem({
+      TableName: 'ably_channels',
+      Item: {
+        'id': { S: uuidv4() },
+        'channelOwner': {S: session.user.email},
+        'ownerName': { S: session.user.name },
+        'channelName': { S: channelName },
+        'timestamp': { S: new Date().toISOString() },
+        'connectionId': { S: realtime.connection.id },
+        'channelMembers': { SS: [session.user.name] },
+      }
+    }, function(err, data) {
+      if (err) {
+        console.log('Error', err);
+      } else {
+        console.log('Success MSG: ', data);
+        queryChannelsWithPartiQL();
+      }
+    });
+  };
 
   const typingIndicator = (content) => {
     if (content !== '') {
@@ -129,6 +174,7 @@ const AblyChatComponent = () => {
       }
   
     setMessagesFromDB(async() => await queryWithPartiQL());
+    setPrivateChannels(async() => await queryChannelsWithPartiQL());
   }, [session]);
 
   var parsedMessages = [];
@@ -195,7 +241,7 @@ const AblyChatComponent = () => {
   const createChannel = () => {
     if (value === '') {
       alert("Please enter a channel name")
-    } else if (channels.includes(value.toLowerCase())) {
+    } else if (privateChannels.includes(value.toLowerCase())) {
       alert("This channel already exists")
       setValue("");
     } else {
@@ -214,12 +260,25 @@ const AblyChatComponent = () => {
             } else {
               return [...page.items.reverse()]
             }
+            
           });
-          setChannels((channels)=>[...channels, value.toLowerCase()]);
+          setPrivateChannels((privateChannels)=> {
+            Array.isArray(privateChannels) ? 
+            [...privateChannels, value.toLowerCase()]
+            : 
+            [value.toLowerCase()]
+            });
+          saveChannelToDB(value.toLowerCase());
+          
         });
         setTimeout(() => { setMessagesFromDB(queryWithPartiQL()); }, 50);
+        setTimeout((privateChannels) => {
+          Array.isArray(privateChannels) ?
+          [...privateChannels, value.toLowerCase()]
+          : 
+          [value.toLowerCase()]
+        }) }, 100);
         setValue("");
-      });
     }
   }
 
@@ -258,12 +317,22 @@ const AblyChatComponent = () => {
   return (
     <>
       <h1 className={styles.channels}>
+      <span className={styles.channelTitle}>PUBLIC</span>
+      {channels.map((channel, index) => 
+      <span key={index}>
+        <p className={styles.channelListItems} onClick={(e) => switchChannel(e)}>
+        <span key={index} className={styles.hashTag}>#</span>
+          {channel}
+        </p>
+      </span>
+      )}
+      <br/>
       <div className={styles.createChannel}>
           <input 
           className={styles.createChannelInput}
           id="create-channel" 
           type="text" 
-          placeholder="Enter Channel Name"
+          placeholder="Enter Private Name"
           maxLength={14}
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -277,15 +346,15 @@ const AblyChatComponent = () => {
           />
           <button className={styles.newChannelButton} onClick={createChannel}>Create Channel</button>
         </div>
-      <span className={styles.channelTitle}>CHANNELS</span>
-      {channels.map((channel, index) => 
+      <span className={styles.channelTitle}>PRIVATE</span>
+      {Array.isArray(privateChannels) ? privateChannels.map((channel, index) => 
       <span key={index}>
         <p className={styles.channelListItems} onClick={(e) => switchChannel(e)}>
         <span key={index} className={styles.hashTag}>#</span>
           {channel}
         </p>
       </span>
-      )}
+      ): <span> &nbsp;NO</span>}
       </h1>
       <center className={styles.chatCenter}>
         <div>
