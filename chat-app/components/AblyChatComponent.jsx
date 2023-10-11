@@ -16,6 +16,7 @@ const AblyChatComponent = () => {
   const [channelName, setChannelName] = useState("home");
   const [channels, setChannels] = useState(["home", "charla", "general", "random", "help", "dev"]);
   const [privateChannels, setPrivateChannels] = useState([]);
+  const [privateMessages, setPrivateMessages] = useState([]);
   const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
   const [members, setMembers] = useState([]);
@@ -108,7 +109,7 @@ const AblyChatComponent = () => {
       });
       channel.presence.subscribe('enter', function(member) {
         setMembers((members)=> {
-          members.push(member.data.image);
+          members.push(member.data);
           members = Array.from(new Set(members));
           return [...members]
         });
@@ -160,7 +161,7 @@ const AblyChatComponent = () => {
 
     channel.presence.subscribe('enter', function(member) {
       setMembers((members)=> {
-        members.push(member.data.image);
+        members.push(member.data);
         members = Array.from(new Set(members));
         return [...members]
       });
@@ -170,7 +171,7 @@ const AblyChatComponent = () => {
       if (err) {
         console.log('error: ', err);  
       } else {
-        setMembers(members.map((member) => member.data.image));
+        setMembers(members.map((member) => member.data));
       }
     });
     if (!session) { channel.presence.enterClient('ably-nextjs-chat', 
@@ -288,20 +289,22 @@ const AblyChatComponent = () => {
               
             });
             setPrivateChannels((privateChannels)=> {
-              Array.isArray(privateChannels) ? 
-              [...privateChannels, value.toLowerCase()]
-              : 
-              [value.toLowerCase()]
+              if (Array.isArray(privateChannels)) {
+                return [...privateChannels, value.toLowerCase()]
+              } else { 
+                return [value.toLowerCase()]
+              }
               });
             saveChannelToDB(value.toLowerCase());
             
           });
           setTimeout(() => { setMessagesFromDB(queryWithPartiQL()); }, 50);
           setTimeout((privateChannels) => {
-            Array.isArray(privateChannels) ?
-            [...privateChannels, value.toLowerCase()]
-            : 
-            [value.toLowerCase()]
+            if (Array.isArray(privateChannels)) {
+              return [...privateChannels, value.toLowerCase()]
+            } else { 
+              return [value.toLowerCase()]
+            }
           }) }, 100);
           setValue("");
       }
@@ -339,6 +342,46 @@ const AblyChatComponent = () => {
     }
   }
 
+  const getUniqueMembers = () => {
+    for (let i = 0; i < members.length; i++) {
+      for (let j = i + 1; j < members.length; j++) {
+        if (members[i].author === members[j].author) {
+          members.splice(j, 1);
+        }
+      }
+    }
+    return members.map((member, i) => {
+      return <img src={member.image} key={i} height={30} style={{ borderRadius: "25px" }} onClick={sendPrivateMessage} id={member.author}/> 
+    })
+  }
+
+  const sendPrivateMessage = (e) => {
+    if (e.target.id === session.user.name) {
+      alert("You cannot send a private message to yourself")
+      return;
+    }
+    if (privateMessages.includes(e.target.id)) {
+      alert("You are already in a private chat with this user")
+      return;
+    }
+
+    setChannelName(e.target.id);
+
+    const newChannel = realtime.channels.get(e.target.id);
+        newChannel.attach();
+        newChannel.publish({ 
+          name: e.target.id, 
+          data: `A New Private Message named <strong>"${e.target.id}"</strong> was created <em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>` 
+        });
+    setPrivateMessages((privateMessages)=> {
+      if (Array.isArray(privateMessages)) {
+        return [...privateMessages, e.target.id]
+      } else {
+        return [e.target.id]
+      }
+    });
+  }
+
   useEffect(() => {
     messageEnd.scrollIntoView({ behaviour: "smooth" });
   });
@@ -361,7 +404,7 @@ const AblyChatComponent = () => {
           className={styles.createChannelInput}
           id="create-channel" 
           type="text" 
-          placeholder="Enter Private Name"
+          placeholder="Type Private Name"
           maxLength={14}
           value={value}
           onChange={(e) => setValue(e.target.value)}
@@ -384,13 +427,21 @@ const AblyChatComponent = () => {
         </p>
       </span>
       ): <span> &nbsp;NO</span>}
+      <br/>
+      <span className={styles.channelTitle}>MESSAGES</span>
+      {Array.isArray(privateMessages) && privateMessages.length ? privateMessages.map((pMsg, index) => 
+      <span key={index}>
+        <p className={styles.channelListItems} onClick={(e) => switchChannel(e)}>
+        <span key={index} className={styles.hashTag}>#</span>
+          {pMsg}
+        </p>
+      </span>
+      ): null}
       </h1>
       <center className={styles.chatCenter}>
         <div>
           <p>Users Online</p>
-          { Array.from(new Set(members)).map((member, index) => {
-            return <img src={member} key={index} height={30} style={{ borderRadius: "25px" }}  /> 
-          })}
+          { getUniqueMembers() }
         </div>
         <h1 className={styles.channelHeading}>"{channelName}"</h1>
         <div className={styles.typeIndicator}>
