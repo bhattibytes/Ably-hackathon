@@ -102,7 +102,8 @@ const AblyChatComponent = () => {
         if (err) {
           console.log('error: ', err);  
         } else {
-          setMembersTyping(members.map((member) => member.data));
+          members = Array.from(new Set(members));
+          setMembersTyping(members.filter((member) => member.data.isTyping === true).map((member) => member.data));
         }
       });
       channel.presence.subscribe('enter', function(member) {
@@ -123,13 +124,16 @@ const AblyChatComponent = () => {
     }
   }
 
-  const getPresenceTyping = (content) => {
+  const getPresenceTyping = async (content) => {
+    return new Promise((resolve, reject) => {
     if (content !== '') {
-    channel.presence.get(function(err, members) {
+      channel.presence.get(function(err, members) {
       if (err) {
         console.log('error: ', err);  
       } else {
-        setMembersTyping(members.filter((member) => member.data.isTyping).map((member) => member.data.author));
+        members = members.filter((member) => member.data.isTyping)
+        members = Array.from(new Set(members));
+        setMembersTyping(members);
       }
     });
     } else {
@@ -139,6 +143,11 @@ const AblyChatComponent = () => {
         }
       });
     }
+    resolve();
+    }).catch((error) => {
+      console.log('error: ', error);  
+      reject(error);
+    });
   }
   useEffect(() => {
     channel.presence.enterClient('ably-nextjs-chat', 
@@ -388,9 +397,7 @@ const AblyChatComponent = () => {
           {messageText !== '' ? (
           <>
             <div>
-              { membersTyping.length < 3 ? membersTyping.map((member, index) => member.isTyping ? <span key={index}>{member.author}&nbsp;{index === 0 && membersTyping.length > 1 ? <span>&</span> : null} </span> : null) :  
-              <span>{ membersTyping[0].author }&nbsp;<span>&</span>&nbsp;{ membersTyping[1].author }</span>
-              }  
+              { membersTyping[0] && membersTyping[1] ? <span>{ membersTyping[0].author }&nbsp;<span>&</span>&nbsp;{ membersTyping[1].author }</span> : membersTyping[0] ? <span>{ membersTyping[0].author }</span> : null }  
             </div>
             <img src="https://www.slicktext.com/images/common/typing-indicator-loader.gif" height={20}/> 
           </>
