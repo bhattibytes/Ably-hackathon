@@ -38,7 +38,7 @@ const AblyChatComponent = () => {
       if (data.Items.length) {
         let channelsFromDB = [];
         data.Items.forEach((item) => {
-          if (item.channelOwner.S === session.user.email && item.channelMembers.SS.includes(session.user.name)) {
+          if (item.channelOwner.S === session.user.email) {
             channelsFromDB.push(item.channelName.S);
           }
         });
@@ -238,48 +238,68 @@ const AblyChatComponent = () => {
     }
   }
 
-  const createChannel = () => {
+  const createChannel = async () => {
     if (value === '') {
       alert("Please enter a channel name")
-    } else if (privateChannels.includes(value.toLowerCase())) {
+      return;
+    }
+    let channelExists = false;
+    const statement = 'SELECT * FROM "ably_channels"';
+    await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
+     data.Items.forEach((item) => {
+        if (item.channelName.S === value.toLowerCase()) {
+          alert("This channel name is already taken by another user")
+          setValue("");
+          channelExists = true;
+          return;
+        }
+      })
+      if (channelExists) {
+        return;
+      }
+      if (privateChannels.includes(value.toLowerCase())) {
       alert("This channel already exists")
       setValue("");
-    } else {
-      setChannelName(value.toLowerCase());
-      const newChannel = realtime.channels.get(value.toLowerCase());
-      newChannel.attach();
-      newChannel.publish({ 
-        name: value.toLowerCase(), 
-        data: `A New Channel named <strong>"${value.toLowerCase()}"</strong> was created <em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>` 
-      });
-      newChannel.once("attached", () => {
-        newChannel.history((err, page) => {
-          setMessagesFromDB((messagesFromDB)=>{
-            if (Array.isArray(messagesFromDB)) {
-              return [...messagesFromDB, ...page.items.reverse()]
-            } else {
-              return [...page.items.reverse()]
-            }
+      } else {
+        setChannelName(value.toLowerCase());
+        const newChannel = realtime.channels.get(value.toLowerCase());
+        newChannel.attach();
+        newChannel.publish({ 
+          name: value.toLowerCase(), 
+          data: `A New Channel named <strong>"${value.toLowerCase()}"</strong> was created <em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>` 
+        });
+        newChannel.once("attached", () => {
+          newChannel.history((err, page) => {
+            setMessagesFromDB((messagesFromDB)=>{
+              if (Array.isArray(messagesFromDB)) {
+                return [...messagesFromDB, ...page.items.reverse()]
+              } else {
+                return [...page.items.reverse()]
+              }
+              
+            });
+            setPrivateChannels((privateChannels)=> {
+              Array.isArray(privateChannels) ? 
+              [...privateChannels, value.toLowerCase()]
+              : 
+              [value.toLowerCase()]
+              });
+            saveChannelToDB(value.toLowerCase());
             
           });
-          setPrivateChannels((privateChannels)=> {
-            Array.isArray(privateChannels) ? 
+          setTimeout(() => { setMessagesFromDB(queryWithPartiQL()); }, 50);
+          setTimeout((privateChannels) => {
+            Array.isArray(privateChannels) ?
             [...privateChannels, value.toLowerCase()]
             : 
             [value.toLowerCase()]
-            });
-          saveChannelToDB(value.toLowerCase());
-          
-        });
-        setTimeout(() => { setMessagesFromDB(queryWithPartiQL()); }, 50);
-        setTimeout((privateChannels) => {
-          Array.isArray(privateChannels) ?
-          [...privateChannels, value.toLowerCase()]
-          : 
-          [value.toLowerCase()]
-        }) }, 100);
-        setValue("");
+          }) }, 100);
+          setValue("");
+      }
+    }).catch((error) => {
+      console.log('error: ', error);  
     }
+    );
   }
 
   const switchChannel = (e) => {
