@@ -16,6 +16,7 @@ const AblyChatComponent = () => {
   const [channelName, setChannelName] = useState("home");
   const [channels, setChannels] = useState(["home", "charla", "general", "random", "help", "dev"]);
   const [privateChannels, setPrivateChannels] = useState([]);
+  const [allPrivateChannelInfo, setallPrivateChannelInfo] = useState([{}]);
   const [privateMessages, setPrivateMessages] = useState([]);
   const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
@@ -36,10 +37,11 @@ const AblyChatComponent = () => {
   async function queryChannelsWithPartiQL() {
     const statement = 'SELECT * FROM "ably_channels"';
     return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
+      setallPrivateChannelInfo(data.Items);
       if (data.Items.length) {
         let channelsFromDB = [];
         data.Items.forEach((item) => {
-          if (item.channelOwner.S === session.user.email) {
+          if (item.channelMembers.SS.includes(session.user.name)) {
             channelsFromDB.push(item.channelName.S);
           }
         });
@@ -202,7 +204,7 @@ const AblyChatComponent = () => {
           parsedMessage = message.message.S;
         } 
         return (
-          <span key={index} className={styles.messages}>
+          <span key={`${index}=Messages`} className={styles.messages}>
             { session.user.email === message.email.S ? 
               <>
                 <img height={40} className={styles.messageImgMe} src={message.image.S}/>   
@@ -227,6 +229,7 @@ const AblyChatComponent = () => {
 
   const form = document.querySelector('form#chat-form');
   const input = document.querySelector('input#create-channel');
+  const overlay = document.querySelector('div#overlay');
 
   const sendChatMessage = async (messageText) => {
     if (messageText !== '') {
@@ -342,17 +345,29 @@ const AblyChatComponent = () => {
     }
   }
 
-  const getUniqueMembers = () => {
-    for (let i = 0; i < members.length; i++) {
-      for (let j = i + 1; j < members.length; j++) {
-        if (members[i].author === members[j].author) {
-          members.splice(j, 1);
+  const getUniqueMembers = (code) => {
+    if (code === 1) {
+      for (let i = 0; i < members.length; i++) {
+        for (let j = i + 1; j < members.length; j++) {
+          if (members[i].author === members[j].author) {
+            members.splice(j, 1);
+          }
         }
       }
+      return members.map((member, i) => {
+        return <img src={member.image} key={`${i}=Member`} height={30} style={{ borderRadius: "25px" }} onClick={sendPrivateMessage} id={member.author}/> 
+      })
     }
-    return members.map((member, i) => {
-      return <img src={member.image} key={i} height={30} style={{ borderRadius: "25px" }} onClick={sendPrivateMessage} id={member.author}/> 
-    })
+    if (code === 2) {
+      return members.map((member, i) => {
+        return (
+          <div key={`${i}=MemberInvite`} className={styles.overlayMem}>
+            <img src={member.image} width={60} style={{ borderRadius: "40px" }} id={member.author}/>
+            <button className={styles.inviteBtn} onClick={() => handleInviteUserToChannel(member.author)}>Invite</button> 
+          </div>
+        )
+      })
+    }
   }
 
   const sendPrivateMessage = (e) => {
@@ -382,6 +397,39 @@ const AblyChatComponent = () => {
     });
   }
 
+  const handleOpenOverlay = () => {
+    overlay.style.display = "flex";
+    console.log('overlay: ', allPrivateChannelInfo)
+  }
+
+  const handleClose = () => {
+    overlay.style.display = 'none';
+  }
+
+  const handleInviteUserToChannel = (name) => {
+    const channelToChange = allPrivateChannelInfo.filter((channel) => channel.channelName.S === channelName).map((channel) => {
+      return channel.id.S;
+    });
+    dynamodb.updateItem({
+      TableName: 'ably_channels',
+      Key: {
+        'id': { S: channelToChange[0] },
+      },
+      UpdateExpression: 'ADD channelMembers :channelMembers',
+      ExpressionAttributeValues: {
+        ':channelMembers': { SS: [name] },
+      },
+      ReturnValues: 'ALL_NEW',
+    }, function(err, data) {
+      if (err) {
+        console.log('Error', err);
+      } else {
+        console.log('Success MSG: ', data);
+      }
+    });
+    overlay.style.display = "none";
+  }
+
   useEffect(() => {
     messageEnd.scrollIntoView({ behaviour: "smooth" });
   });
@@ -391,9 +439,9 @@ const AblyChatComponent = () => {
       <h1 className={styles.channels}>
       <span className={styles.channelTitle}>PUBLIC</span>
       {channels.map((channel, index) => 
-      <span key={index}>
+      <span key={`${index}=Public`}>
         <p className={styles.channelListItems} onClick={(e) => switchChannel(e)}>
-        <span key={index} className={styles.hashTag}>#</span>
+        <span className={styles.hashTag}>#</span>
           {channel}
         </p>
       </span>
@@ -420,9 +468,9 @@ const AblyChatComponent = () => {
         </div>
       <span className={styles.channelTitle}>PRIVATE</span>
       {Array.isArray(privateChannels) ? privateChannels.map((channel, index) => 
-      <span key={index}>
+      <span key={`${index}=Private`}>
         <p className={styles.channelListItems} onClick={(e) => switchChannel(e)}>
-        <span key={index} className={styles.hashTag}>#</span>
+        <span className={styles.hashTag}>#</span>
           {channel}
         </p>
       </span>
@@ -430,9 +478,9 @@ const AblyChatComponent = () => {
       <br/>
       <span className={styles.channelTitle}>MESSAGES</span>
       {Array.isArray(privateMessages) && privateMessages.length ? privateMessages.map((pMsg, index) => 
-      <span key={index}>
+      <span key={`${index}=PrivMessages`}>
         <p className={styles.channelListItems} onClick={(e) => switchChannel(e)}>
-        <span key={index} className={styles.hashTag}>#</span>
+        <span className={styles.hashTag}>#</span>
           {pMsg}
         </p>
       </span>
@@ -441,9 +489,10 @@ const AblyChatComponent = () => {
       <center className={styles.chatCenter}>
         <div>
           <p>Users Online</p>
-          { getUniqueMembers() }
+          { getUniqueMembers(1) }
         </div>
-        <h1 className={styles.channelHeading}>"{channelName}"</h1>
+        <h1 className={styles.channelHeading}>"{channelName}"{Array.isArray(privateChannels) && privateChannels.includes(channelName) ? <span className={styles.plusBtn} onClick={handleOpenOverlay}>👤+</span> :null}</h1>
+        <div id="overlay" className={styles.overlay}><div>{getUniqueMembers(2)}</div><button onClick={handleClose}>X</button></div>
         <div className={styles.typeIndicator}>
           {messageText !== '' ? (
           <>
