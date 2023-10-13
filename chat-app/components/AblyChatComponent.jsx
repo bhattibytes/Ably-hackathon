@@ -392,22 +392,20 @@ const AblyChatComponent = () => {
       }
       return members.map((member, i) => {
         return (
-          <>
-            <div className={styles.onlineUsersList}>
-              <img src={member.image} key={`${i}=Member`} width={40} style={{ borderRadius: "25px" }} onClick={sendPrivateMessage} id={member.author}/> 
-              <span className={styles.onlineName}>{member.author}
-              { membersTyping.map((memberType) => {
-                if (memberType.author === member.author && memberType.isTyping === true && messageText !== '' ) {
-                return (
-                  <img className={styles.typing} id="typing-indicator" src="https://www.slicktext.com/images/common/typing-indicator-loader.gif" height={20}/>
-                )
-              } else {
-                return null;
-              }
-              })}
-              </span>
-            </div>
-          </>
+          <div className={styles.onlineUsersList} key={`${i}=MemberList`}>
+            <img src={member.image} width={40} style={{ borderRadius: "25px" }} onClick={sendPrivateMessage} id={member.author}/> 
+            <span className={styles.onlineName}>{member.author}
+            { membersTyping.map((memberType, index) => {
+              if (memberType.author === member.author && memberType.isTyping === true && messageText !== '' ) {
+              return (
+                <img className={styles.typing} id="typing-indicator" src="https://www.slicktext.com/images/common/typing-indicator-loader.gif" height={20}/>
+              )
+            } else {
+              return null;
+            }
+            })}
+            </span>
+          </div>
         )
       })
     }
