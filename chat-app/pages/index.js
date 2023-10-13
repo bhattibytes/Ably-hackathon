@@ -24,7 +24,6 @@ export default function Home() {
         </Head>
         
         <main className={styles.main}>
-          <a href='/workspaces/home'><h1>WORKSPACES</h1></a>
           <div className={styles.welcome}>
             <img className={styles.welcomeImg} src={session.user.image} width={75} height={75}/>
             &nbsp;&nbsp;<h1>Welcome {session.user.name.split(' ')[0]} &nbsp;
@@ -32,7 +31,7 @@ export default function Home() {
               <a className={styles.links} href='/api/auth/signout'>&nbsp;Sign Out</a>
             </h1>
           </div>
-          <AblyChatComponent />
+          <AblyChatComponent />  
         </main>
 
         <Footer />

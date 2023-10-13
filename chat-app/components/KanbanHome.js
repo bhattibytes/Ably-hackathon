@@ -339,7 +339,7 @@ export default function Kanban() {
           )): null }
         </DragDropContext>
       </div>
-      <a href="/"><h1>CHAT HOME</h1></a>
+      <a href="/"><h1 className={styles.homeLink}>CHAT HOME</h1></a>
     </div>
   );
 }

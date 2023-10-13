@@ -21,6 +21,7 @@ const AblyChatComponent = () => {
   const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
   const [members, setMembers] = useState([]);
+  const [registeredUsers, setRegisteredUsers] = useState([]); 
   const [membersTyping, setMembersTyping] = useState([]);
 
   async function queryWithPartiQL() {
@@ -65,6 +66,42 @@ const AblyChatComponent = () => {
       });
     }
   );
+
+  const addRegisteredUsers = async () => {
+    const statement = 'SELECT * FROM "ably_registered"';
+    return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
+      if (data.Items.length) {
+        let usersFromDB = [];
+        data.Items.forEach((item) => {
+          usersFromDB.push(item.name.S);
+        });
+        setRegisteredUsers([...usersFromDB]);
+      }
+    }).catch((error) => {
+      console.log('error: ', error);  
+    });;
+  }
+
+  const saveUserToDB = async () => {
+    dynamodb.putItem({
+      TableName: 'ably_registered',
+      Item: {
+        'id': { S: uuidv4() },
+        'email': { S: session.user.email },
+        'name': { S: session.user.name },
+        'image': { S: session.user.image },
+        'timestamp': { S: new Date().toISOString() },
+        'connectionId': { S: realtime.connection.id },
+      }
+    }, function(err, data) {
+      if (err) {
+        console.log('Error', err);
+      } else {
+        console.log('Success MSG: ', data);
+      }
+    });
+  }
+
 
   const saveChannelToDB = async (channelName) => {
     if (privateChannels.includes(channelName)) {
@@ -228,7 +265,6 @@ const AblyChatComponent = () => {
   }
 
   const form = document.querySelector('form#chat-form');
-  const input = document.querySelector('input#create-channel');
   const overlay = document.querySelector('div#overlay');
 
   const sendChatMessage = async (messageText) => {
@@ -355,7 +391,24 @@ const AblyChatComponent = () => {
         }
       }
       return members.map((member, i) => {
-        return <img src={member.image} key={`${i}=Member`} height={30} style={{ borderRadius: "25px" }} onClick={sendPrivateMessage} id={member.author}/> 
+        return (
+          <>
+            <div className={styles.onlineUsersList}>
+              <img src={member.image} key={`${i}=Member`} width={40} style={{ borderRadius: "25px" }} onClick={sendPrivateMessage} id={member.author}/> 
+              <span className={styles.onlineName}>{member.author}
+              { membersTyping.map((memberType) => {
+                if (memberType.author === member.author && memberType.isTyping === true && messageText !== '' ) {
+                return (
+                  <img className={styles.typing} id="typing-indicator" src="https://www.slicktext.com/images/common/typing-indicator-loader.gif" height={20}/>
+                )
+              } else {
+                return null;
+              }
+              })}
+              </span>
+            </div>
+          </>
+        )
       })
     }
     if (code === 2) {
@@ -399,7 +452,6 @@ const AblyChatComponent = () => {
 
   const handleOpenOverlay = () => {
     overlay.style.display = "flex";
-    console.log('overlay: ', allPrivateChannelInfo)
   }
 
   const handleClose = () => {
@@ -436,7 +488,7 @@ const AblyChatComponent = () => {
 
   return (
     <>
-      <h1 className={styles.channels}>
+      <div className={styles.channels}>
       <span className={styles.channelTitle}>PUBLIC</span>
       {channels.map((channel, index) => 
       <span key={`${index}=Public`}>
@@ -485,25 +537,10 @@ const AblyChatComponent = () => {
         </p>
       </span>
       ): null}
-      </h1>
+      </div>
       <center className={styles.chatCenter}>
-        <div>
-          <p>Users Online</p>
-          { getUniqueMembers(1) }
-        </div>
-        <h1 className={styles.channelHeading}>"{channelName}"{Array.isArray(privateChannels) && privateChannels.includes(channelName) ? <span className={styles.plusBtn} onClick={handleOpenOverlay}>👤+</span> :null}</h1>
+        <h1 className={styles.channelHeading}>"{channelName}"{Array.isArray(privateChannels) && privateChannels.includes(channelName) ? <span className={styles.plusBtn} onClick={handleOpenOverlay}>👤+</span> : null}</h1>
         <div id="overlay" className={styles.overlay}><div>{getUniqueMembers(2)}</div><button onClick={handleClose}>X</button></div>
-        <div className={styles.typeIndicator}>
-          {messageText !== '' ? (
-          <>
-            <div>
-              { membersTyping[0] && membersTyping[1] ? <span>{ membersTyping[0].author }&nbsp;<span>&</span>&nbsp;{ membersTyping[1].author }</span> : membersTyping[0] ? <span>{ membersTyping[0].author }</span> : null }  
-            </div>
-            <img src="https://www.slicktext.com/images/common/typing-indicator-loader.gif" height={20}/> 
-          </>
-          )
-          : null}
-        </div>
         <div className={styles.chatHolder}>
           <div className={styles.chatText}>
             {parsedMessages}
@@ -541,15 +578,22 @@ const AblyChatComponent = () => {
                   emoticons | link | code |  removeformat \ '
               }}
               onEditorChange={(content, editor) => {
-                getPresenceTyping(content);
-                typingIndicator(content);
-                return setMessageText(content)
+                return (
+                getPresenceTyping(content),
+                typingIndicator(content),
+                setMessageText(content)
+                )
               }}
             />
             <button type="submit" className={styles.button}>Send</button>
           </form>
         </div>
+        <a href='/workspaces/home'><h1 className={styles.workLink}>WORKSPACES</h1></a>
       </center>
+      <div>
+        <p className={styles.chatUser}>Click to Chat to User</p>
+        { getUniqueMembers(1) }
+      </div>
     </>
   )
 }

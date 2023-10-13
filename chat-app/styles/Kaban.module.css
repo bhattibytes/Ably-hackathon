@@ -8,6 +8,10 @@
   left: 80px;
 }
 
+.homeLink {
+  color: white;
+}
+
 .columnsContainer {
   display: flex;
   flex-direction: row;
