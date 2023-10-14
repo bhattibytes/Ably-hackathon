@@ -190,8 +190,6 @@ export default function Kanban() {
   }, []);
 
   return (
-    // console.log('state: ', state),
-    // console.log('headers: ', headers),
     <div className={styles.kabanMain}>
       <h1>TrackChat - App</h1>
       <input 
@@ -340,6 +338,7 @@ export default function Kanban() {
         </DragDropContext>
       </div>
       <a href="/"><h1 className={styles.homeLink}>CHAT HOME</h1></a>
+      <a href="/workspaces/6619e718-2af9-4cd6-819b-fe06c4c849ad"><h1 className={styles.homeLink}>SAVED SAMPLE</h1></a>
     </div>
   );
 }

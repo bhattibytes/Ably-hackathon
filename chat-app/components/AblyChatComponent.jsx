@@ -18,17 +18,29 @@ const AblyChatComponent = () => {
   const [privateChannels, setPrivateChannels] = useState([]);
   const [allPrivateChannelInfo, setallPrivateChannelInfo] = useState([{}]);
   const [privateMessages, setPrivateMessages] = useState([]);
+  const [directMessagesFromDB, setDirectMessagesFromDB] = useState([]);
   const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
   const [members, setMembers] = useState([]);
   const [registeredUsers, setRegisteredUsers] = useState([]); 
   const [membersTyping, setMembersTyping] = useState([]);
 
-  async function queryWithPartiQL() {
+  async function queryUsersWithPartiQL() {
     const statement = 'SELECT * FROM "ably_users"';
     return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
       if (data.Items.length) {
         setMessagesFromDB(data.Items);
+      }
+    }).catch((error) => {
+      console.log('error: ', error);  
+    });;
+  }
+
+  async function queryDirectMsgsWithPartiQL() {
+    const statement = 'SELECT * FROM "ably_direct_messages"';
+    return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
+      if (data.Items.length) {
+        setDirectMessagesFromDB(data.Items);
       }
     }).catch((error) => {
       console.log('error: ', error);  
@@ -55,7 +67,7 @@ const AblyChatComponent = () => {
 
   const [channel, realtime] = useChannel(channelName, async (message) => {
     let messagesFromDBCall = [];
-    setTimeout(async() => { messagesFromDBCall = await queryWithPartiQL(); }, 10);
+    setTimeout(async() => { messagesFromDBCall = await queryUsersWithPartiQL(); }, 10);
     return new Promise((resolve, reject) => {
       resolve(messagesFromDBCall);
     }).catch((error) => {
@@ -102,6 +114,29 @@ const AblyChatComponent = () => {
     });
   }
 
+  const saveDirectMessageToDB = async (messageText) => {
+    dynamodb.putItem({
+      TableName: 'ably_direct_messages',
+      Item: {
+        'id': { S: uuidv4() },
+        'email': { S: session.user.email },
+        'name': { S: session.user.name },
+        'image': { S: session.user.image },
+        'timestamp': { S: new Date().toISOString() },
+        'connectionId': { S: realtime.connection.id },
+        'message': { S: messageText },
+        'channel': { S: channelName },
+        'members': { SS: [session.user.name] },
+      }
+    }, function(err, data) {
+      if (err) {
+        console.log('Error', err);
+      } else {
+        console.log('Success MSG: ', data);
+      }
+    });
+  }
+
 
   const saveChannelToDB = async (channelName) => {
     if (privateChannels.includes(channelName)) {
@@ -118,6 +153,7 @@ const AblyChatComponent = () => {
         'timestamp': { S: new Date().toISOString() },
         'connectionId': { S: realtime.connection.id },
         'channelMembers': { SS: [session.user.name] },
+        'channelMembersImg': { SS: [session.user.image] },
       }
     }, function(err, data) {
       if (err) {
@@ -222,7 +258,7 @@ const AblyChatComponent = () => {
         });
       }
   
-    setMessagesFromDB(async() => await queryWithPartiQL());
+    setMessagesFromDB(async() => await queryUsersWithPartiQL());
     setPrivateChannels(async() => await queryChannelsWithPartiQL());
   }, [session]);
 
@@ -273,7 +309,7 @@ const AblyChatComponent = () => {
         name: channelName, 
         data: `<strong>${messageText.slice(3, -4) + '</strong>' + '<em id="date">at '+ new Date().toLocaleString().split(',')[1]}</em>` 
       });
-      setTimeout(() => { setMessagesFromDB(queryWithPartiQL()); }, 50);
+      setTimeout(() => { setMessagesFromDB(queryUsersWithPartiQL()); }, 50);
     }
   }
   
@@ -337,7 +373,7 @@ const AblyChatComponent = () => {
             saveChannelToDB(value.toLowerCase());
             
           });
-          setTimeout(() => { setMessagesFromDB(queryWithPartiQL()); }, 50);
+          setTimeout(() => { setMessagesFromDB(queryUsersWithPartiQL()); }, 50);
           setTimeout((privateChannels) => {
             if (Array.isArray(privateChannels)) {
               return [...privateChannels, value.toLowerCase()]
@@ -414,10 +450,18 @@ const AblyChatComponent = () => {
         return (
           <div key={`${i}=MemberInvite`} className={styles.overlayMem}>
             <img src={member.image} width={60} style={{ borderRadius: "40px" }} id={member.author}/>
-            <button className={styles.inviteBtn} onClick={() => handleInviteUserToChannel(member.author)}>Invite</button> 
+            <button className={styles.inviteBtn} onClick={() => handleInviteUserToChannel(member.author, member.image)}>Invite</button> 
           </div>
         )
       })
+    }
+
+    if (code === 3) {
+      return allPrivateChannelInfo.filter((member, i) => { 
+      if (member.channelName?.S === channelName && member.channelMembersImg?.SS) {
+        return (member);
+      }
+    })
     }
   }
 
@@ -437,7 +481,7 @@ const AblyChatComponent = () => {
         newChannel.attach();
         newChannel.publish({ 
           name: e.target.id, 
-          data: `A New Private Message named <strong>"${e.target.id}"</strong> was created <em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>` 
+          data: `A New Private Message chat with <strong>"${e.target.id}"</strong> was created <em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>` 
         });
     setPrivateMessages((privateMessages)=> {
       if (Array.isArray(privateMessages)) {
@@ -456,7 +500,7 @@ const AblyChatComponent = () => {
     overlay.style.display = 'none';
   }
 
-  const handleInviteUserToChannel = (name) => {
+  const handleInviteUserToChannel = (name, img) => {
     const channelToChange = allPrivateChannelInfo.filter((channel) => channel.channelName.S === channelName).map((channel) => {
       return channel.id.S;
     });
@@ -465,9 +509,10 @@ const AblyChatComponent = () => {
       Key: {
         'id': { S: channelToChange[0] },
       },
-      UpdateExpression: 'ADD channelMembers :channelMembers',
+      UpdateExpression: 'ADD channelMembers :channelMembers, channelMembersImg :channelMembersImg',
       ExpressionAttributeValues: {
         ':channelMembers': { SS: [name] },
+        ':channelMembersImg': { SS: [img] },
       },
       ReturnValues: 'ALL_NEW',
     }, function(err, data) {
@@ -524,7 +569,7 @@ const AblyChatComponent = () => {
           {channel}
         </p>
       </span>
-      ): <span> &nbsp;NO</span>}
+      ): <span></span>}
       <br/>
       <span className={styles.channelTitle}>MESSAGES</span>
       {Array.isArray(privateMessages) && privateMessages.length ? privateMessages.map((pMsg, index) => 
@@ -537,7 +582,19 @@ const AblyChatComponent = () => {
       ): null}
       </div>
       <center className={styles.chatCenter}>
-        <h1 className={styles.channelHeading}>"{channelName}"{Array.isArray(privateChannels) && privateChannels.includes(channelName) ? <span className={styles.plusBtn} onClick={handleOpenOverlay}>👤+</span> : null}</h1>
+        <div className={styles.privateChannelsUserListContainer}>
+          {getUniqueMembers(3).map((member, i) => {
+            return member.channelMembersImg.SS.map((memberImg) => {
+            return (
+              <div key={`${uuidv4()}=PrivateMember+${i}`} className={styles.privateChannelsUserList}>
+                <img src={memberImg} width={40} style={{ borderRadius: "40px" }} />
+              </div>
+            )});
+          })}
+        </div>
+        <h1 className={styles.channelHeading}>"{channelName}"{Array.isArray(privateChannels) && privateChannels.includes(channelName) ? <span className={styles.plusBtn} onClick={handleOpenOverlay}>👤+</span> 
+        : null}
+        </h1>
         <div id="overlay" className={styles.overlay}><div>{getUniqueMembers(2)}</div><button onClick={handleClose}>X</button></div>
         <div className={styles.chatHolder}>
           <div className={styles.chatText}>
@@ -588,9 +645,10 @@ const AblyChatComponent = () => {
         </div>
         <a href='/workspaces/home'><h1 className={styles.workLink}>WORKSPACES</h1></a>
       </center>
-      <div>
-        <p className={styles.chatUser}>Click to Chat to User</p>
-        { getUniqueMembers(1) }
+      
+      <div className={styles.chatUserContainer}>
+        <p className={styles.chatTitle}>Click to Send DM</p>
+        <div className={styles.chatUser}>{ getUniqueMembers(1) }</div>
       </div>
     </>
   )
