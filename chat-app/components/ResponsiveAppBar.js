@@ -26,7 +26,7 @@ const ResponsiveAppBar = () => {
       return window.location.href = `/`;
     }
     if (event.target.innerText === 'Chat 💬') {
-      return window.location.href = `/Chat`;
+      return window.location.href = `/chat`;
     } 
     if (event.target.innerText === 'Workspaces 🖥️') {
       return window.location.href = `/workspaces/home`;
@@ -53,7 +53,7 @@ const ResponsiveAppBar = () => {
       return window.location.href = `/`;
     }
     if (event.target.innerText === 'CHAT 💬') {
-      return window.location.href = `/Chat`;
+      return window.location.href = `/chat`;
     }
     if (event.target.innerText === 'WORKSPACES 🖥️') {
       return window.location.href = `/workspaces/home`;

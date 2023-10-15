@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic'
 
 const AblyChatComponent = dynamic(() => import('../components/AblyChatComponent'), { ssr: false });
 
-const Chat = () => {
+const chat = () => {
   const { data: session, status } = useSession();
 
   return (
@@ -14,4 +14,4 @@ const Chat = () => {
     </div>
   )
 };
-export default Chat;
+export default chat;

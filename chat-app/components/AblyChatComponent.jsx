@@ -250,7 +250,7 @@ const AblyChatComponent = () => {
       }
     });
     if (!session) { channel.presence.enterClient('ably-nextjs-chat', 
-        {email: session.user.email, image: session.user.image, author: session.user.name, isTyping: false}, 
+        {email: session?.user.email, image: session?.user.image, author: session?.user.name, isTyping: false}, 
         function(err) {   
           if (err) {
             console.log('error: ', err);  
