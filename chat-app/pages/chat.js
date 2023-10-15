@@ -10,7 +10,7 @@ const chat = () => {
   return (
     <div>
       <ResponsiveAppBar />
-      <AblyChatComponent session={session} status={status}/>
+      <AblyChatComponent />
     </div>
   )
 };
