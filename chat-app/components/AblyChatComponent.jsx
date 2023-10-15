@@ -542,6 +542,7 @@ const AblyChatComponent = () => {
       </span>
       )}
       <br/>
+      <hr width={140}/>
       <div className={styles.createChannel}>
           <input 
           className={styles.createChannelInput}
@@ -561,6 +562,7 @@ const AblyChatComponent = () => {
           />
           <button className={styles.newChannelButton} onClick={createChannel}>Create Channel</button>
         </div>
+        <hr width={140}/>
       <span className={styles.channelTitle}>PRIVATE</span>
       {Array.isArray(privateChannels) ? privateChannels.map((channel, index) => 
       <span key={`${index}=Private`}>
@@ -643,9 +645,7 @@ const AblyChatComponent = () => {
             <button type="submit" className={styles.button}>Send</button>
           </form>
         </div>
-        <a href='/workspaces/home'><h1 className={styles.workLink}>WORKSPACES</h1></a>
       </center>
-      
       <div className={styles.chatUserContainer}>
         <p className={styles.chatTitle}>DM Online Members</p>
         <div className={styles.chatUser}>{ getUniqueMembers(1) }</div>

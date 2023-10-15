@@ -8,8 +8,8 @@
 .channels {
   position: absolute;
   left: 0;
-  top: 45px;
-  margin-left: 40px;
+  top: 90px;
+  margin-left: 150px;
   background-color: #6e07f3;
   padding-bottom: 15px;
   padding-top: 15px;
@@ -20,7 +20,8 @@
   font-weight: bold;
   height: 700px;
   width: 140px;
-  overflow: scroll;
+  overflow-y: scroll;
+  overflow-x: hidden;
 }
 
 .hashTag {
@@ -47,11 +48,7 @@
   color: white;
 }
 
-.createChannel {
-  display: flex;
-  flex-direction: column;
-  width: 140px;
-}
+
 
 .plusBtn {
   cursor: pointer;
@@ -100,11 +97,12 @@
 
 .chatCenter {
   position: absolute;
+  top: 100px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  left: 220px;
+  left: 330px;
   margin-right: 60px;
 }
 
@@ -156,8 +154,8 @@
 
 .chatUserContainer {
   position: absolute;
-  left: 772px;
-  top: 45px;
+  left: 882px;
+  top: 90px;
   border: 3px solid #eee;
   border-radius: 10px;
   height: 570px;
@@ -264,11 +262,17 @@
   color: white;
   font-size: 14px;
   background: linear-gradient(to right, #6e07f3, #5BE9B9);
-  margin-left: 5px;
 }
 
 .newChannelButton:hover {
   background: linear-gradient(90deg, #6e07f3 0%, #5BE9B9 62%, #5BE9B9 100%);
+}
+
+.createChannel {
+  display: flex;
+  flex-direction: column;
+  width: 140px;
+  margin-bottom: 10px;
 }
 
 .createChannelInput {
@@ -311,7 +315,7 @@
 
   .chatUserContainer {
     position: absolute;
-    left: 722px;
+    left: 832px;
     width: 220px;
   }
 }
@@ -320,17 +324,22 @@
 @media screen and (max-width: 1020px) {
   .chatHolder {
     width: 400px;
+    margin-left: -140px;
   }
   .chatUserContainer {
     position: absolute;
-    left: 622px;
+    left: 592px;
   }
 
+  .channels {
+    margin-left: 10px;
+  }
 }
 
 @media screen and (max-width: 750px) {
   .chatHolder {
     width: 300px;
+    margin-left: 0px;
   }
 
   .chatUserContainer {
@@ -344,6 +353,7 @@
   }
 
   .channels {
+    width: 100px;
     margin-left: 10px;
   }
 
@@ -382,10 +392,12 @@
 
   .newChannelButton {
     font-size: 15px;
+    width: 100px;
   }
 
   .createChannelInput {
     font-size: 15px;
+    width: 100px;
   }
 
   .button {

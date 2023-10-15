@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import styles from "../styles/Kaban.module.css";
+import ResponsiveAppBar from "./ResponsiveAppBar";
 
 
 // fake data generator
@@ -190,156 +191,156 @@ export default function Kanban() {
   }, []);
 
   return (
-    <div className={styles.kabanMain}>
-      <h1>TrackChat - App</h1>
-      <input 
-        className={styles.inputNewGroup}
-        type="text" 
-        placeholder="Enter New Group Name" 
-        maxLength={17}
-        id="new-column-name" 
-        onChange={(e) => setValue(e.target.value)} 
-        value={value}
-      />
-      <button
-      className={styles.button}
-        type="button"
-        onClick={() => {
-          if (value === "") {
-            alert("Please enter name of column");
-            return;
-          } else if (headers.includes(value)) {
-            alert("Column name already exists");
-            return;
-          } else {
-          setHeaders([...headers, value]);
-          setState([...state, getItems(1, itemCount)]);
-          setItemCount(itemCount + 1);
-          setValue("");
-          }
-        }}
-      >
-        Add new group
-      </button>
-      <button
+    <>
+      <ResponsiveAppBar />
+      <div className={styles.kabanMain}>
+        <input 
+          className={styles.inputNewGroup}
+          type="text" 
+          placeholder="Enter New Group Name" 
+          maxLength={17}
+          id="new-column-name" 
+          onChange={(e) => setValue(e.target.value)} 
+          value={value}
+        />
+        <button
         className={styles.button}
-        type="button"
-        onClick={() => {
-          setState([...state, getItems(1, itemCount)]);
-          setHeaders([...headers, `New Group ${itemCount}`]);
-          setItemCount(itemCount + 1);
-        }}
-      >
-        Add new item
-      </button>
-     
-      <div className={styles.kanbanBoard}> 
-        <DragDropContext onDragEnd={onDragEnd}>
-          { state ? state.map((el, ind) => (
-            <Droppable key={ind} droppableId={`${ind}`}>
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  style={getListStyle(snapshot.isDraggingOver)}
-                  {...provided.droppableProps}
-                >  
-                <center style={{ marginLeft: "-160px"}}>            
-                <span className={styles.columnHeader} id={headers[ind]} onClick={(e)=> handleUpdateHeader(e)}>
-                  {headers[ind] }
-                </span>
-                </center>
-                <input 
-                  type="text" 
-                  id={`${headers[ind]}-input`} 
-                  key={ind}
-                  placeholder={`Edit header title...`}
-                  maxLength={17}
-                  onChange={(e) => setHeaderValue(e.target.value)}
-                  onKeyDown={(e)=> handleKeyDownHeaderEdit(e)} 
-                  className={styles.columnHeaderInput}
-                  style={{ display: 'none'}}
-                  value={headerValue} 
-                />
-                  {el.map((item, index) => (
-                    <Draggable
-                      key={item.id}
-                      draggableId={item.id}
-                      index={index}
-                    >
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          style={getItemStyle(
-                            snapshot.isDragging,
-                            provided.draggableProps.style
-                          )}
-                        >
+          type="button"
+          onClick={() => {
+            if (value === "") {
+              alert("Please enter name of column");
+              return;
+            } else if (headers.includes(value)) {
+              alert("Column name already exists");
+              return;
+            } else {
+            setHeaders([...headers, value]);
+            setState([...state, getItems(1, itemCount)]);
+            setItemCount(itemCount + 1);
+            setValue("");
+            }
+          }}
+        >
+          Add new group
+        </button>
+        <button
+          className={styles.button}
+          type="button"
+          onClick={() => {
+            setState([...state, getItems(1, itemCount)]);
+            setHeaders([...headers, `New Group ${itemCount}`]);
+            setItemCount(itemCount + 1);
+          }}
+        >
+          Add new item
+        </button>
+      
+        <div className={styles.kanbanBoard}> 
+          <DragDropContext onDragEnd={onDragEnd}>
+            { state ? state.map((el, ind) => (
+              <Droppable key={ind} droppableId={`${ind}`}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    style={getListStyle(snapshot.isDraggingOver)}
+                    {...provided.droppableProps}
+                  >  
+                  <center style={{ marginLeft: "-160px"}}>            
+                  <span className={styles.columnHeader} id={headers[ind]} onClick={(e)=> handleUpdateHeader(e)}>
+                    {headers[ind] }
+                  </span>
+                  </center>
+                  <input 
+                    type="text" 
+                    id={`${headers[ind]}-input`} 
+                    key={ind}
+                    placeholder={`Edit header title...`}
+                    maxLength={17}
+                    onChange={(e) => setHeaderValue(e.target.value)}
+                    onKeyDown={(e)=> handleKeyDownHeaderEdit(e)} 
+                    className={styles.columnHeaderInput}
+                    style={{ display: 'none'}}
+                    value={headerValue} 
+                  />
+                    {el.map((item, index) => (
+                      <Draggable
+                        key={item.id}
+                        draggableId={item.id}
+                        index={index}
+                      >
+                        {(provided, snapshot) => (
                           <div
-                          className={styles.taskCard}
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={getItemStyle(
+                              snapshot.isDragging,
+                              provided.draggableProps.style
+                            )}
                           >
-                            <span className={styles.taskTitle} id={`${item.id}=task`}>{item.content}</span>
-                            <button
-                              type="button"
-                              className={styles.taskButton}
-                              onClick={(e) => {handleClickEditTaskTitle(e)}}
-                              id={item.id}
+                            <div
+                            className={styles.taskCard}
                             >
-                              edit | save
-                            </button>
-                            <button
-                              className={styles.taskButtonDelete}
-                              type="button"
-                              onClick={() => {
-                                var txt = "Are you sure you want to delete this task?";
-                                if (confirm(txt)) {
-                                  console.log("delete");
-                                } else {
-                                  return;
-                                }
-                                const newState = [...state];
-                                newState[ind].splice(index, 1);
-                                setState(
-                                  newState.filter(group => {
-                                    if (group.length === 0) {
-                                      const newHeaders = [...headers];
-                                      newHeaders.splice(ind, 1);
-                                      setHeaders(newHeaders);
-                                    }
-                                    return group.length
-                                  })
-                                );
-                              }}
-                            >
-                              delete
-                            </button>
-                            <input type="text" 
-                              id={`${item.id}=input`} 
-                              key={ind} 
-                              style={{ display: 'none' }}
-                              placeholder={`Edit task title ${item.id.split('-')[1]}`}
-                              className={styles.taskInput} 
-                              value={task}
-                              onChange={(e) => {setTask(e.target.value) }}
-                              onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}
-                            />
-                            <span className={styles.id}>id: {item.id.split('-')[1]}</span>
+                              <span className={styles.taskTitle} id={`${item.id}=task`}>{item.content}</span>
+                              <button
+                                type="button"
+                                className={styles.taskButton}
+                                onClick={(e) => {handleClickEditTaskTitle(e)}}
+                                id={item.id}
+                              >
+                                edit | save
+                              </button>
+                              <button
+                                className={styles.taskButtonDelete}
+                                type="button"
+                                onClick={() => {
+                                  var txt = "Are you sure you want to delete this task?";
+                                  if (confirm(txt)) {
+                                    console.log("delete");
+                                  } else {
+                                    return;
+                                  }
+                                  const newState = [...state];
+                                  newState[ind].splice(index, 1);
+                                  setState(
+                                    newState.filter(group => {
+                                      if (group.length === 0) {
+                                        const newHeaders = [...headers];
+                                        newHeaders.splice(ind, 1);
+                                        setHeaders(newHeaders);
+                                      }
+                                      return group.length
+                                    })
+                                  );
+                                }}
+                              >
+                                delete
+                              </button>
+                              <input type="text" 
+                                id={`${item.id}=input`} 
+                                key={ind} 
+                                style={{ display: 'none' }}
+                                placeholder={`Edit task title ${item.id.split('-')[1]}`}
+                                className={styles.taskInput} 
+                                value={task}
+                                onChange={(e) => {setTask(e.target.value) }}
+                                onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}
+                              />
+                              <span className={styles.id}>id: {item.id.split('-')[1]}</span>
+                            </div>
                           </div>
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          )): null }
-        </DragDropContext>
+                        )}
+                      </Draggable>
+                    ))}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            )): null }
+          </DragDropContext>
+        </div>
       </div>
-      <a href="/"><h1 className={styles.homeLink}>CHAT HOME</h1></a>
-      <a href="/workspaces/6619e718-2af9-4cd6-819b-fe06c4c849ad"><h1 className={styles.homeLink}>SAVED SAMPLE</h1></a>
-    </div>
+    </>
   );
 }
 
