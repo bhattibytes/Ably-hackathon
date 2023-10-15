@@ -647,7 +647,7 @@ const AblyChatComponent = () => {
       </center>
       
       <div className={styles.chatUserContainer}>
-        <p className={styles.chatTitle}>Click to Send DM</p>
+        <p className={styles.chatTitle}>DM Online Members</p>
         <div className={styles.chatUser}>{ getUniqueMembers(1) }</div>
       </div>
     </>
