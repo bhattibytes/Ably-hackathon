@@ -3,12 +3,11 @@ import { useChannel } from "./AblyReactEffect.js";
 import styles from '../styles/AblyChatComponent.module.css';
 import { Editor } from '@tinymce/tinymce-react';
 import parse from 'html-react-parser';
-import { useSession } from 'next-auth/react';
 import { v4 as uuidv4 } from 'uuid';
 
 const dynamodb = new AWS.DynamoDB({ convertEmptyValues: true });
 
-const AblyChatComponent = () => {
+const AblyChatComponent = ({ session, status }) => {
   let messageEnd = null;
 
   const [messageText, setMessageText] = useState("");
@@ -19,7 +18,6 @@ const AblyChatComponent = () => {
   const [allPrivateChannelInfo, setallPrivateChannelInfo] = useState([{}]);
   const [privateMessages, setPrivateMessages] = useState([]);
   const [directMessagesFromDB, setDirectMessagesFromDB] = useState([]);
-  const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
   const [members, setMembers] = useState([]);
   const [registeredUsers, setRegisteredUsers] = useState([]); 
