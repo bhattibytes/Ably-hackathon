@@ -589,7 +589,7 @@ const AblyChatComponent = () => {
             return member.channelMembersImg.SS.map((memberImg) => {
             return (
               <div key={`${uuidv4()}=PrivateMember+${i}`} className={styles.privateChannelsUserList}>
-                <img src={memberImg} width={40} style={{ borderRadius: "40px" }} />
+                <img src={memberImg} width={40} height={40} className={styles.channelMemberImg} />
               </div>
             )});
           })}
@@ -618,7 +618,7 @@ const AblyChatComponent = () => {
                 }
               }}
               init={{
-                height: 180,
+                height: 195,
                 placeholder: "Type your message here...",
                 menubar: false,
                 plugins: [

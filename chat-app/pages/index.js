@@ -23,6 +23,8 @@ export default function Home() {
         <ResponsiveAppBar />
         <center><h1 className={styles.headlineTitle}>IMAGINE A PLACE...</h1></center>
         <center><p className={styles.summary}>...where you can seamlessly engage in real-time conversations with fellow users while simultaneously monitoring a dynamic project management dashboard. This multifunctional app offers the perfect blend of social interaction and efficient project oversight, enhancing collaboration and productivity</p></center>
+        <center><p className={styles.summary}>DEMO - This app is in development - DEMO </p></center>
+        
         <img className={styles.coverImg1} src={'https://images2.imgbox.com/9b/20/aEhBSWpJ_o.png'} width={600}/>
         <img className={styles.coverImg2} src={'https://images2.imgbox.com/d6/99/YXaCmfHq_o.png'} width={1000}/>
         <main className={styles.main}>

@@ -9,7 +9,7 @@ export default function AccessDenied () {
   return (
     <div className={styles.accessDenied}>
       <h1 className={styles.welcomeMsg}>WELCOME TO TRACKCHAT</h1>
-      <div>
+      <div className={styles.authProviders}>
         <a href="/api/auth/signin"
            className={styles.clickHere}
            onClick={(e) => {
@@ -23,6 +23,8 @@ export default function AccessDenied () {
           <Image className={styles.logInImg} alt={"github"} src={github} width={300}/>
         </a>
       </div>
+        <img className={styles.coverImg2} src={'https://images2.imgbox.com/9b/20/aEhBSWpJ_o.png'} width={600}/>
+        <img className={styles.coverImg1} src={'https://images2.imgbox.com/d6/99/YXaCmfHq_o.png'} width={1000}/>
     </div>
   )
 }
