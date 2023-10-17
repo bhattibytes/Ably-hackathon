@@ -542,7 +542,7 @@ const AblyChatComponent = () => {
       </span>
       )}
       <br/>
-      <hr width={140}/>
+      <hr width={140} style={{ marginBottom: "10px" }}/>
       <div className={styles.createChannel}>
           <input 
           className={styles.createChannelInput}

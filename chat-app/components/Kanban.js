@@ -191,7 +191,9 @@ export default function Kanban({ id, s, h, ic }) {
         alert("Column name already exists");
         setHeaderValue("");
         return;
-      }
+      } else {
+        setTask(e.target.value)
+      
       let input = document.getElementById(`${e.target.id}`);
       input.style.display = "none";
 
@@ -203,17 +205,26 @@ export default function Kanban({ id, s, h, ic }) {
       setHeaders(newHeaders);
       if (headerValue !== "") {
         setHeaderValue("");
+        
       }
     }
   }
+  }
 
   const handleClickEditTaskTitle = (e) => {
+    const closeInputs = document.querySelectorAll("input[id$=input]");
+    closeInputs.forEach((input) => {
+      if (input.style.display === "") {
+        input.style.display = "none";
+      }
+    });
+    
     const inputId = `${e.target.id}=input`;
     const taskElementId = `${e.target.id}=task`;
   
     const input = document.getElementById(inputId);
     const taskElement = document.getElementById(taskElementId);
-  
+   
     input.style.display = input.style.display === "none" ? "" : "none";
   
     const id = e.target.id;
@@ -229,6 +240,7 @@ export default function Kanban({ id, s, h, ic }) {
       setState(newState);
       taskElement.innerHTML = task;
       setTask("");
+      input.style.display = "none";
     }
   };
   
@@ -257,6 +269,7 @@ export default function Kanban({ id, s, h, ic }) {
   
       taskElement.innerHTML = newTaskTitle;
       taskInput.value = ""; 
+      setTask("");
     }
   };
   
@@ -403,9 +416,9 @@ export default function Kanban({ id, s, h, ic }) {
                                 style={{ display: 'none' }}
                                 placeholder={`Edit task title ${item.id.split('-')[1]}`}
                                 className={styles.taskInput} 
-                                // onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}
+                                onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}
                                 value={task}
-                                onChange={(e) => {setTask(e.target.value) }}
+                                onChange={(e) => { setTask(e.target.value) }}
                               />
                               <span className={styles.id}>id: {item.id.split('-')[1]}</span>
                             </div>

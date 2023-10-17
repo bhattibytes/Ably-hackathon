@@ -34,6 +34,7 @@ export default function Workspaces() {
   // New state variable to store channel information
   const [channels, setChannels] = useState([]);
   const { data: session } = useSession(); // Assuming you're using next-auth to get the user session
+  const [channelName, setChannelName] = useState('SAMPLE');
 
   const fetchDataFromDynamoDB = async (itemId) => {
     const statement = 'SELECT * FROM "ably_kanban"';
@@ -83,10 +84,10 @@ export default function Workspaces() {
       const initialHeaders = ['Backlog', 'To Do', 'In Progress', 'Done'];
       const count = 20;
 
-      console.log(channelName.S);
-      console.log(initialState);
-      console.log(initialHeaders);
-      console.log(count);
+      // console.log(channelName.S);
+      // console.log(initialState);
+      // console.log(initialHeaders);
+      // console.log(count);
   
       try {
         const params = {
@@ -138,6 +139,7 @@ export default function Workspaces() {
   }
 
   const navigateToWorkspace = (channelName) => {
+    setChannelName(channelName.toUpperCase());
     router.push(`/workspaces/${channelName}`);
     setDataFetched(false);
     setIsLoading(true);
@@ -166,7 +168,7 @@ export default function Workspaces() {
           {channels.map(channel => (
             <li
             key={channel.channelName.S}
-            className='bg-blue-800 cursor-pointer hover:underline text-white font-medium mb-2 p-1 pl-3 rounded-xl'
+            className='bg-track-blue cursor-pointer hover:underline text-white font-medium mb-2 p-1 pl-3 rounded-xl'
             onClick={() => navigateToWorkspace(channel.channelName.S)} // Wrap in a function
           >
             {channel.channelName.S}
@@ -178,11 +180,14 @@ export default function Workspaces() {
         {isLoading ? (
           <p>Loading...</p>
         ) : dataFetched ? (
-          <Kanban s={state} h={headers} ic={itemCount} id={kanbanId} />
+          <>
+            <h1 className={styles.channelHeader}>{channelName}</h1>
+            <Kanban s={state} h={headers} ic={itemCount} id={kanbanId} />
+          </>
         ) : (
           <div className='bg-teal-100 rounded-2xl m-6 mt-20 flex text-center justify-center items-center h-[70vh] flex-col gap-6'>
             <p className='text-2xl'>Create a kanban board for "<span className='font-bold'>{router.query.id}</span>  "</p>
-            <button onClick={insertItemToDynamoDB} className='text-xl font-medium hover:underline cursor-pointer rounded-xl p-2 bg-blue-900 text-white'>Create</button>
+            <button onClick={insertItemToDynamoDB} className='text-xl font-medium hover:underline cursor-pointer rounded-xl p-2 bg-track-blue text-white'>Create</button>
 
           </div>
         )}

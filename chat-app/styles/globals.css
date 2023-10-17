@@ -22,3 +22,15 @@ html {
   background-image: url('../assets/bg.png');
   background-size: 100%; 
 }
+
+img#vercel {
+  height: 20px;
+}
+
+img#ably {
+  height: 42px;
+}
+
+img#tiny {
+  height: 32px;
+}
