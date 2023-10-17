@@ -59,7 +59,7 @@ const ResponsiveAppBar = () => {
       return window.location.href = `/workspaces/home`;
     }
     if (event.target.innerText === 'SAVED 💾') {
-      return window.location.href = `/workspaces/6619e718-2af9-4cd6-819b-fe06c4c849ad`;
+      return window.location.href = `/workspaces/play-ground`;
     }
     if (event.target.innerText === 'PROFILE 👤') {
       return window.location.href = `/profile`;
