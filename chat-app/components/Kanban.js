@@ -77,7 +77,7 @@ export default function Kanban({ id, s, h, ic }) {
   const [headerValue, setHeaderValue] = useState("");
   const [headers, setHeaders] = useState([]);
   const [task , setTask] = useState('');
-  const [itemCount, setItemCount] = useState(40);
+  const [itemCount, setItemCount] = useState(null);
   
   useEffect(() => {
       updateItemToDynamoDB(id);
@@ -85,7 +85,12 @@ export default function Kanban({ id, s, h, ic }) {
 
 
   const updateItemToDynamoDB = (itemId) => {
+    if (itemCount === null) {
+      return;
+    }
   try {
+    
+
     const params = {
       TableName: 'ably_kanban',
       Key: {
@@ -99,7 +104,7 @@ export default function Kanban({ id, s, h, ic }) {
       },
       ExpressionAttributeValues: {
         ':newState': { S: JSON.stringify(state) }, 
-        ':newHeaders': { S: JSON.stringify(headers) }, 
+        ':newHeaders': { SS: headers }, 
         ':newItemCount': { N: itemCount.toString() }, 
       },
       ReturnValues: 'ALL_NEW', 
@@ -269,7 +274,7 @@ export default function Kanban({ id, s, h, ic }) {
   return (
     <>
       <ResponsiveAppBar />
-      <div className={styles.kabanMain}>
+      <div className="pt-32">
         <input 
           className={styles.inputNewGroup}
           type="text" 
@@ -398,7 +403,7 @@ export default function Kanban({ id, s, h, ic }) {
                                 style={{ display: 'none' }}
                                 placeholder={`Edit task title ${item.id.split('-')[1]}`}
                                 className={styles.taskInput} 
-                                onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}
+                                // onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}
                                 value={task}
                                 onChange={(e) => {setTask(e.target.value) }}
                               />
@@ -423,26 +428,33 @@ export default function Kanban({ id, s, h, ic }) {
 
 
 
-   const insertItemToDynamoDB = async () => {
-    try {
-      const params = {
-        TableName: 'ably_kanban',
-        Item: {
-          'id': { S: uuidv4() },
-          'state': { SS: JSON.stringify(state) }, 
-          'headers': { SS: JSON.stringify(headers) }, 
-          'itemCount': { N: itemCount.toString() },
-        },
-      };
+  //  const insertItemToDynamoDB = async () => {
+  //   try {
+  //     const params = {
+  //       TableName: 'ably_kanban',
+  //       Item: {
+  //         'id': { S: uuidv4() },
+  //         'state': { SS: JSON.stringify(state) }, 
+  //         'headers': { SS: JSON.stringify(headers) }, 
+  //         'itemCount': { N: itemCount.toString() },
+  //         'channelOwner': {S: session.user.email},
+  //         'ownerName': { S: session.user.name },
+  //         'channelName': { S: channelName },
+  //         'timestamp': { S: new Date().toISOString() },
+  //         'connectionId': { S: realtime.connection.id },
+  //         'channelMembers': { SS: [session.user.name] },
+  //         'channelMembersImg': { SS: [session.user.image] },
+  //       },
+  //     };
   
-      dynamodb.putItem(params, function(err, data) {
-        if (err) {
-          console.error('Error inserting item into DynamoDB:', err);
-        } else {
-          console.log('Item inserted into DynamoDB:', params.Item);
-        }
-      });
-    } catch (error) {
-      console.error('Error preparing item for DynamoDB:', error);
-    }
-  };
+  //     dynamodb.putItem(params, function(err, data) {
+  //       if (err) {
+  //         console.error('Error inserting item into DynamoDB:', err);
+  //       } else {
+  //         console.log('Item inserted into DynamoDB:', params.Item);
+  //       }
+  //     });
+  //   } catch (error) {
+  //     console.error('Error preparing item for DynamoDB:', error);
+  //   }
+  // };
