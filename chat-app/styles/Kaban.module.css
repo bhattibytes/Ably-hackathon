@@ -49,14 +49,14 @@
 }
 
 .columnHeader {
-  position: absolute;
-  top: 40px;
+
   font-weight: bold;
   text-decoration: underline;
   border: 2px solid #eee;
-  margin-left: 10px;
+  margin-left: 150px;
   border-radius: 5px;
   padding-left: 10px;
+  margin-bottom: 30px;
   padding-right: 10px;
   line-height: 2;
   color: white;
