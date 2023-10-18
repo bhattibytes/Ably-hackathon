@@ -434,7 +434,7 @@ const AblyChatComponent = () => {
             { membersTyping.map((memberType, index) => {
               if (memberType.author === member.author && memberType.isTyping === true && messageText !== '' ) {
               return (
-                <img className={styles.typing} id="typing-indicator" src="https://www.slicktext.com/images/common/typing-indicator-loader.gif" height={20}/>
+                <img className={styles.typing} id="typing-indicator" src="https://www.slicktext.com/images/common/typing-indicator-loader.gif"/>
               )
             } else {
               return null;
@@ -531,6 +531,22 @@ const AblyChatComponent = () => {
 
   return (
     <>
+      <div className={styles.mainContainer}>
+      <div className={styles.privateChannelsUserListContainer}>  
+          {getUniqueMembers(3).map((member, i) => {
+            return member.channelMembersImg.SS.map((memberImg) => {
+            return (
+              <div key={`${uuidv4()}=PrivateMember+${i}`} className={styles.privateChannelsUserList}>
+                <img src={memberImg} width={40} height={40} className={styles.channelMemberImg} />
+              </div>
+            )});
+          })}
+        </div>
+        <h1 className={styles.channelHeading}>"{channelName}"{Array.isArray(privateChannels) && privateChannels.includes(channelName) ? <span className={styles.plusBtn} onClick={handleOpenOverlay}>👤+</span> 
+        : null}
+        </h1>
+        <div id="overlay" className={styles.overlay}><div>{getUniqueMembers(2)}</div><button onClick={handleClose}>X</button></div>
+      <div className={styles.channelsContainer}>
       <div className={styles.channels}>
       <span className={styles.channelTitle}>PUBLIC</span>
       {channels.map((channel, index) => 
@@ -573,7 +589,11 @@ const AblyChatComponent = () => {
       </span>
       ): <span></span>}
       <br/>
-      <span className={styles.channelTitle}>MESSAGES</span>
+      {/* <span className={styles.channelTitle}>MESSAGES</span> */}
+      <div className={styles.chatUserContainer}>
+        <p className={styles.chatTitle}>DM Online Members</p>
+        <div className={styles.chatUser}>{ getUniqueMembers(1) }</div>
+      </div>
       {Array.isArray(privateMessages) && privateMessages.length ? privateMessages.map((pMsg, index) => 
       <span key={`${index}=PrivMessages`}>
         <p className={styles.channelListItems} onClick={(e) => switchChannel(e)}>
@@ -583,73 +603,63 @@ const AblyChatComponent = () => {
       </span>
       ): null}
       </div>
+      </div>
       <center className={styles.chatCenter}>
-        <div className={styles.privateChannelsUserListContainer}>
-          {getUniqueMembers(3).map((member, i) => {
-            return member.channelMembersImg.SS.map((memberImg) => {
-            return (
-              <div key={`${uuidv4()}=PrivateMember+${i}`} className={styles.privateChannelsUserList}>
-                <img src={memberImg} width={40} height={40} className={styles.channelMemberImg} />
-              </div>
-            )});
-          })}
-        </div>
-        <h1 className={styles.channelHeading}>"{channelName}"{Array.isArray(privateChannels) && privateChannels.includes(channelName) ? <span className={styles.plusBtn} onClick={handleOpenOverlay}>👤+</span> 
-        : null}
-        </h1>
-        <div id="overlay" className={styles.overlay}><div>{getUniqueMembers(2)}</div><button onClick={handleClose}>X</button></div>
         <div className={styles.chatHolder}>
           <div className={styles.chatText}>
             {parsedMessages}
             <div ref={(element) => { messageEnd = element; }}></div> 
           </div>
-          <form
-          id="chat-form" 
-          onSubmit={handleFormSubmission} 
-          className={styles.form}
-          >
-            <Editor
-              apiKey={process.env.TINY_MCE_API_KEY}
-              onKeyDown={(e) => {
-                if (e.key == "Enter") {
-                  e.preventDefault();
-                  sendChatMessage(messageText);
-                  form.reset();
-                }
-              }}
-              init={{
-                height: 195,
-                placeholder: "Type your message here...",
-                menubar: false,
-                plugins: [
-                  'emoticons',
-                  'insertdatetime',
-                  'link',
-                  'lists',
-                  'table',
-                  'image',
-                  'code'
-                ],
-                toolbar:
-                  'undo redo | formatselect | bold italic backcolor | \
-                  emoticons | link | code |  removeformat \ '
-              }}
-              onEditorChange={(content, editor) => {
-                return (
-                getPresenceTyping(content),
-                typingIndicator(content),
-                setMessageText(content)
-                )
-              }}
-            />
-            <button type="submit" className={styles.button}>Send</button>
-          </form>
         </div>
       </center>
-      <div className={styles.chatUserContainer}>
-        <p className={styles.chatTitle}>DM Online Members</p>
-        <div className={styles.chatUser}>{ getUniqueMembers(1) }</div>
-      </div>
+     
+      <center className={styles.editorContainer}>
+        <div className={styles.editor}>
+          <form
+            id="chat-form" 
+            onSubmit={handleFormSubmission} 
+            className={styles.form}
+            >
+            <Editor
+                    apiKey={process.env.TINY_MCE_API_KEY}
+                    onKeyDown={(e) => {
+                      if (e.key == "Enter") {
+                        e.preventDefault();
+                        sendChatMessage(messageText);
+                        form.reset();
+                      }
+                    }}
+                    init={{
+                      height: 200,
+                      placeholder: "Type your message here...",
+                      menubar: false,
+                      resize: false,
+                      plugins: [
+                        'emoticons',
+                        'insertdatetime',
+                        'link',
+                        'lists',
+                        'table',
+                        'image',
+                        'code'
+                      ],
+                      toolbar:
+                        'undo redo | formatselect | bold italic backcolor | \
+                        emoticons | link | code |  removeformat \ '
+                    }}
+                    onEditorChange={(content, editor) => {
+                      return (
+                      getPresenceTyping(content),
+                      typingIndicator(content),
+                      setMessageText(content)
+                      )
+                    }}
+                  />
+                  <button type="submit" className={styles.button}>Send</button>
+            </form>
+            </div>
+          </center>
+        </div>
     </>
   )
 }

@@ -5,23 +5,24 @@
   text-decoration: underline;
 }
 
-.channels {
+.channelsContainer {
   position: absolute;
   left: 0;
-  top: 90px;
-  margin-left: 150px;
   background-color: #6e07f3;
   padding-bottom: 15px;
   padding-top: 15px;
-  border-radius: 15px;
   padding-left: 20px;
   padding-right: 20px;
   color: white;
   font-weight: bold;
-  height: 700px;
-  width: 180px;
+  height: 100%;
+  width: 250px;
   overflow-y: scroll;
   overflow-x: hidden;
+}
+
+.channels {
+  margin-top: 80px;
 }
 
 .hashTag {
@@ -44,9 +45,13 @@
 }
 
 .channelHeading {
-  margin-top: 0px;
+  background-color: #6e07f3;
+  border-radius: 15px;
+  position: absolute;
+  top: 80px;
+  left: 270px;
   color: white;
-  font-size: 26px;
+  font-size: 36px;
 }
 
 .plusBtn {
@@ -96,22 +101,20 @@
 
 .chatCenter {
   position: absolute;
-  top: 100px;
-  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  left: 330px;
-  margin-right: 60px;
+  bottom: 190px;
+  width: 100%;
 }
 
 .chatHolder {
-  display: grid;
-  grid-template-rows: 1fr 100px;
-  border: 2px solid #eee;
-  border-radius: 25px;
+  position: absolute;
+  bottom: 0;
+  border-top: 5px solid #6e07f3;
+  left: 250px;
   background-color: #eee;
-  width: 550px;
+  width: calc(100% - 250px);
   height: 55vh;
 }
 
@@ -134,9 +137,13 @@
 }
 
 .privateChannelsUserListContainer {
+  position: absolute;
+  left: 285px;
+  top: 140px;
   display: flex;
   flex-direction: row;
   height: 50px;
+  z-index: 10;
 }
 
 .privateChannelsUserList {
@@ -159,22 +166,18 @@
 }
 
 .chatUserContainer {
-  position: absolute;
-  left: 882px;
-  top: 90px;
-  border: 3px solid #eee;
-  border-radius: 10px;
-  height: 615px;
+  margin-left: -20px;
+  height: 300px;
   width: 250px;
   overflow-y: scroll;
   overflow-x: hidden;
-  background-color: grey;
 }
 
 .chatUser {
   display: flex;
   flex-direction: column;
   justify-content: left;
+  margin-top: 10px;
   margin-left: 5px;
   margin-bottom: 10px;
   color: white;
@@ -192,6 +195,7 @@
 
 .typing {
   margin-left: 5px;
+  width: 30px;
 }
 
 .author {
@@ -222,6 +226,22 @@
   display: grid;
   grid-template-columns: 1fr 100px;
   border-top: 1px solid #eee;
+}
+
+.mainContainer {
+  display: grid;
+  background-color: #5BE9B9;
+}
+
+.editorContainer {
+  border: 1px solid #eee;
+}
+
+.editor {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 250px;
 }
 
 .messages {
@@ -292,8 +312,6 @@
 
 .button {
   border: 0;
-  border-bottom-right-radius: 25px;
-  border-top-left-radius: 25px;
   color: white;
   font-weight: bold;
   font-size: 1.4em;
@@ -316,117 +334,3 @@
   text-decoration: underline;
   margin-top: 150px;
 }
-
-@media screen and (max-width: 1600px) {
-  .chatHolder {
-    width: 500px;
-  }
-
-  .chatUserContainer {
-    position: absolute;
-    left: 832px;
-    width: 220px;
-  }
-}
-
-
-@media screen and (max-width: 1020px) {
-  .chatHolder {
-    width: 400px;
-    margin-left: -140px;
-  }
-  .chatUserContainer {
-    position: absolute;
-    left: 592px;
-  }
-
-  .channels {
-    margin-left: 10px;
-  }
-}
-
-@media screen and (max-width: 750px) {
-  .chatHolder {
-    width: 300px;
-    margin-left: 0px;
-  }
-
-  .chatUserContainer {
-    position: absolute;
-    left: 452px;
-    width: 200px;
-  }
-
-  .chatCenter {
-    left: 150px;
-  }
-
-  .channels {
-    width: 100px;
-    margin-left: 10px;
-  }
-
-  .channelTitle {
-    font-size: 20px;
-    margin-left: 0px;
-  }
-
-  .channelListItems {
-    font-size: 15px;
-  }
-
-  .chatText {
-    font-size: 15px;
-  }
-
-  .author {
-    font-size: 15px;
-  }
-
-  .authorMe {
-    font-size: 15px;
-  }
-
-  .message {
-    font-size: 15px;
-  }
-
-  .messageMe {
-    font-size: 15px;
-  }
-
-  .messages {
-    font-size: 15px;
-  }
-
-  .newChannelButton {
-    font-size: 15px;
-    width: 100px;
-  }
-
-  .createChannelInput {
-    font-size: 15px;
-    width: 100px;
-  }
-
-  .button {
-    font-size: 15px;
-  }
-
-  .button:hover {
-    font-size: 15px;
-  }
-
-  .button:disabled, 
-  .button:hover:disabled {
-    font-size: 15px;
-  }
-
-}
-
-@media screen and (max-width: 500px) {
-
-}
-
-
-
