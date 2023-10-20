@@ -65,6 +65,21 @@ const AblyChatComponent = () => {
     });;
   }
 
+  const addRegisteredUsers = async () => {
+    const statement = 'SELECT * FROM "ably_registered"';
+    return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
+      if (data.Items.length) {
+        let usersFromDB = [];
+        data.Items[0].userNames.SS.forEach((item, index) => {
+          usersFromDB.push({name: item, email: data.Items[0].userEmails.SS[index], image: data.Items[0].userImages.SS[index]});
+        });
+        setRegisteredUsers([...usersFromDB]);
+      }
+    }).catch((error) => {
+      console.log('error: ', error);  
+    });
+  }
+
   const [channel, realtime] = useChannel(channelName, async (message) => {
     let messagesFromDBCall = [];
     setTimeout(async() => { messagesFromDBCall = await queryUsersWithPartiQL(); }, 10);
@@ -79,39 +94,34 @@ const AblyChatComponent = () => {
     }
   );
 
-  const addRegisteredUsers = async () => {
-    const statement = 'SELECT * FROM "ably_registered"';
-    return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
-      if (data.Items.length) {
-        let usersFromDB = [];
-        data.Items.forEach((item) => {
-          usersFromDB.push(item.name.S);
-        });
-        setRegisteredUsers([...usersFromDB]);
-      }
-    }).catch((error) => {
-      console.log('error: ', error);  
-    });;
-  }
+ 
 
-  const saveUserToDB = async () => {
-    dynamodb.putItem({
-      TableName: 'ably_registered',
-      Item: {
-        'id': { S: uuidv4() },
-        'email': { S: session.user.email },
-        'name': { S: session.user.name },
-        'image': { S: session.user.image },
-        'timestamp': { S: new Date().toISOString() },
-        'connectionId': { S: realtime.connection.id },
-      }
-    }, function(err, data) {
-      if (err) {
-        console.log('Error', err);
+  const saveUserToDB = () => {
+    registeredUsers.forEach((user) => {
+      if (user.email === session.user.email) {
+        return;
       } else {
-        console.log('Success MSG: ', data);
+        dynamodb.updateItem({
+          TableName: 'ably_registered',
+          Key: {
+            'id': { S: '1' },
+          },
+          UpdateExpression: 'ADD userEmails :userEmails, userNames :userNames, userImages :userImages',
+          ExpressionAttributeValues: {
+            ':userEmails': { SS: [session.user.email] },
+            ':userNames': { SS: [session.user.name] },
+            ':userImages': { SS: [session.user.image] },
+          },
+          ReturnValues: 'ALL_NEW',
+        }, function(err, data) {
+          if (err) {
+            console.log('Error', err);
+          } else {
+            console.log('Success MSG: ', data);
+          }
+        });
       }
-    });
+    })
   }
 
   const saveDirectMessageToDB = async (messageText) => {
@@ -446,11 +456,12 @@ const AblyChatComponent = () => {
       })
     }
     if (code === 2) {
-      return members.map((member, i) => {
+      return registeredUsers.map((member, i) => {
+        console.log(member);
         return (
           <div key={`${i}=MemberInvite`} className={styles.overlayMem}>
-            <img src={member.image} width={60} style={{ borderRadius: "40px" }} id={member.author}/>
-            <button className={styles.inviteBtn} onClick={() => handleInviteUserToChannel(member.author, member.image)}>Invite</button> 
+            <img src={member.image} width={60} style={{ borderRadius: "40px" }} id={member.name}/>
+            <button className={styles.inviteBtn} onClick={() => handleInviteUserToChannel(member.name, member.image)}>Invite</button> 
           </div>
         )
       })
@@ -524,6 +535,12 @@ const AblyChatComponent = () => {
     });
     overlay.style.display = "none";
   }
+
+  useEffect( () => {
+    addRegisteredUsers();
+    saveUserToDB();
+    // queryDirectMsgsWithPartiQL();
+  }, []);
 
   useEffect(() => {
     messageEnd.scrollIntoView({ behaviour: "smooth" });
