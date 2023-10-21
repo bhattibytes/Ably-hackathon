@@ -161,7 +161,7 @@ const AblyChatComponent = () => {
       } 
     });
     if (!privateMessages.includes(name)) {
-      console.log('Inside IF name is not in privateMessages for saveDirectMessageToDB');
+      // console.log('Inside IF name is not in privateMessages for saveDirectMessageToDB');
       dynamodb.putItem({
         TableName: 'ably_direct_messages',
         Item: {
