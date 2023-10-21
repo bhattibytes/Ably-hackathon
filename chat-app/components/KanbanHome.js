@@ -1,7 +1,5 @@
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import styles from "../styles/Kaban.module.css";
-import { v4 as uuidv4 } from 'uuid';
-import AWS from 'aws-sdk';
 import ResponsiveAppBar from "./ResponsiveAppBar";
 import React, { useMemo,useState , useRef, useEffect, useContext } from "react";
 import { mockNames } from "../utils/mockNames";
@@ -10,20 +8,9 @@ import useSpaceMembers from "../utils/useMembers";
 import { MemberCursors, YourCursor } from "../utils/Cursors";
 import { SpacesContext } from "../utils/SpacesContext";
 
-
-AWS.config.update({
-  region: 'us-east-2',
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-});
-
-
-const dynamodb = new AWS.DynamoDB({ convertEmptyValues: true });
-
+// fake data generator
 const mockName = () => mockNames[Math.floor(Math.random() * mockNames.length)];
 
-
-// fake data generator
 const getItems = (count, offset = 0) =>
   Array.from({ length: count }, (v, k) => k).map(k => ({
     id: `item-${k + offset}-${new Date().getTime()}`,
@@ -79,13 +66,13 @@ const getListStyle = isDraggingOver => ({
   marginTop: "50px"
 });
 
-export default function Kanban({ id, s, h, ic }) {
+export default function Kanban() {
   const [state, setState] = useState([]);
   const [value, setValue] = useState("");
   const [headerValue, setHeaderValue] = useState("");
   const [headers, setHeaders] = useState([]);
   const [task , setTask] = useState('');
-  const [itemCount, setItemCount] = useState(null);
+  const [itemCount, setItemCount] = useState(40);
 
   const name = useMemo(mockName, []);
   /** 💡 Select a color to assign randomly to a new user that enters the space💡 */
@@ -104,49 +91,7 @@ export default function Kanban({ id, s, h, ic }) {
   const { self, otherMembers } = useSpaceMembers(space);
 
   const liveCursors = useRef(null);
-  
-  useEffect(() => {
-      updateItemToDynamoDB(id);
-  }, [state, headers, itemCount]); 
 
-
-  const updateItemToDynamoDB = (itemId) => {
-    if (itemCount === null) {
-      return;
-    }
-  try {
-    
-
-    const params = {
-      TableName: 'ably_kanban',
-      Key: {
-        id: { S: itemId }, 
-      },
-      UpdateExpression: 'SET #state = :newState, #headers = :newHeaders, #itemCount = :newItemCount',
-      ExpressionAttributeNames: {
-        '#state': 'state',
-        '#headers': 'headers',
-        '#itemCount': 'itemCount',
-      },
-      ExpressionAttributeValues: {
-        ':newState': { S: JSON.stringify(state) }, 
-        ':newHeaders': { SS: headers }, 
-        ':newItemCount': { N: itemCount.toString() }, 
-      },
-      ReturnValues: 'ALL_NEW', 
-    };
-
-    dynamodb.updateItem(params, function (err, data) {
-      if (err) {
-        console.error('Error updating item in DynamoDB:', err);
-      } else {
-        console.log('Item updated in DynamoDB:', data.Attributes);
-      }
-    });
-  } catch (error) {
-    console.error('Error preparing item for DynamoDB update:', error);
-  }
-};
 
   function onDragEnd(result) {
     const { source, destination } = result;
@@ -217,9 +162,7 @@ export default function Kanban({ id, s, h, ic }) {
         alert("Column name already exists");
         setHeaderValue("");
         return;
-      } else {
-        setTask(e.target.value)
-      
+      }
       let input = document.getElementById(`${e.target.id}`);
       input.style.display = "none";
 
@@ -231,88 +174,51 @@ export default function Kanban({ id, s, h, ic }) {
       setHeaders(newHeaders);
       if (headerValue !== "") {
         setHeaderValue("");
-        
       }
     }
-  }
   }
 
   const handleClickEditTaskTitle = (e) => {
-    const closeInputs = document.querySelectorAll("input[id$=input]");
-    closeInputs.forEach((input) => {
-      if (input.style.display === "") {
-        input.style.display = "none";
-      }
-    });
-    
-    const inputId = `${e.target.id}=input`;
-    const taskElementId = `${e.target.id}=task`;
-  
-    const input = document.getElementById(inputId);
-    const taskElement = document.getElementById(taskElementId);
-   
-    input.style.display = input.style.display === "none" ? "" : "none";
-  
-    const id = e.target.id;
-    if (task !== "") {
-      const newState = state.map((row) =>
-        row.map((item) => {
-          if (item.id === id) {
-            return { ...item, content: task };
-          }
-          return item;
-        })
-      );
-      setState(newState);
-      taskElement.innerHTML = task;
-      setTask("");
+    let input = document.getElementById(`${e.target.id}=input`);
+    let taskElement = document.getElementById(`${e.target.id}=task`);
+
+    if (input.style.display === "none") {
+      input.style.display = "";
+    } else {
       input.style.display = "none";
     }
-  };
-  
-  // after,I edit task title click Enter, the state is not updated; check later
+
+    if (task === "") {
+      return;
+    }
+
+    taskElement.innerHTML = task;
+
+    if (task !== "") {
+      setTask("");
+    }
+  }
+
   const handleKeyDownEditTaskTitle = (e) => {
     if (e.key === "Enter") {
       let taskElement = document.getElementById(`${e.target.id.split('=')[0]}=task`);
-      let taskInput = document.getElementById(`${e.target.id}`);
-  
-      if (!taskInput) return; 
-  
+      
       e.target.style.display = "none";
-      const newTaskTitle = taskInput.value; 
-  
-      const newState = [...state];
-      const id = e.target.id;
-  
-      for (let i = 0; i < newState.length; i++) {
-        for (let j = 0; j < newState[i].length; j++) {
-          if (newState[i][j].id === id) {
-            newState[i][j].content = newTaskTitle; 
-            setState(newState);
-          }
-        }
-      }
-  
-      taskElement.innerHTML = newTaskTitle;
-      taskInput.value = ""; 
+      taskElement.innerHTML = task;
+
       setTask("");
     }
-  };
-  
-  // useEffect(() => {
-  //   setState([getItems(10), getItems(10, 10), getItems(10, 20), getItems(10, 30)]);
-  //   setHeaders(["Click to Edit 1", "Click to Edit 2", "Click to Edit 3", "Click to Edit 4"]);
-  // }, []);
-  
+  }
+
   useEffect(() => {
-    setState(s);
-    setHeaders(h);
-    setItemCount(ic);
+    setState([getItems(10), getItems(10, 10), getItems(10, 20), getItems(10, 30)]);
+    setHeaders(["Click to Edit 1", "Click to Edit 2", "Click to Edit 3", "Click to Edit 4"]);
   }, []);
 
   return (
     <>
-    <div
+
+      <div
         id="live-cursors"
         ref={liveCursors}
         className="live-cursors-container relative example-container"
@@ -330,7 +236,7 @@ export default function Kanban({ id, s, h, ic }) {
           selfConnectionId={self?.connectionId}
         />
         <ResponsiveAppBar />
-      <div className="pt-32">
+        <div className={styles.kabanMain}>
         <input 
           className={styles.inputNewGroup}
           type="text" 
@@ -459,9 +365,9 @@ export default function Kanban({ id, s, h, ic }) {
                                 style={{ display: 'none' }}
                                 placeholder={`Edit task title ${item.id.split('-')[1]}`}
                                 className={styles.taskInput} 
-                                onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}
                                 value={task}
-                                onChange={(e) => { setTask(e.target.value) }}
+                                onChange={(e) => {setTask(e.target.value) }}
+                                onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}
                               />
                               <span className={styles.id}>id: {item.id.split('-')[1]}</span>
                             </div>
@@ -477,42 +383,14 @@ export default function Kanban({ id, s, h, ic }) {
           </DragDropContext>
         </div>
       </div>
-    </div>
+      </div>
+    
       
+      
+      
+    
+          
     </>
   );
 }
 
-
-
-
-  //  const insertItemToDynamoDB = async () => {
-  //   try {
-  //     const params = {
-  //       TableName: 'ably_kanban',
-  //       Item: {
-  //         'id': { S: uuidv4() },
-  //         'state': { SS: JSON.stringify(state) }, 
-  //         'headers': { SS: JSON.stringify(headers) }, 
-  //         'itemCount': { N: itemCount.toString() },
-  //         'channelOwner': {S: session.user.email},
-  //         'ownerName': { S: session.user.name },
-  //         'channelName': { S: channelName },
-  //         'timestamp': { S: new Date().toISOString() },
-  //         'connectionId': { S: realtime.connection.id },
-  //         'channelMembers': { SS: [session.user.name] },
-  //         'channelMembersImg': { SS: [session.user.image] },
-  //       },
-  //     };
-  
-  //     dynamodb.putItem(params, function(err, data) {
-  //       if (err) {
-  //         console.error('Error inserting item into DynamoDB:', err);
-  //       } else {
-  //         console.log('Item inserted into DynamoDB:', params.Item);
-  //       }
-  //     });
-  //   } catch (error) {
-  //     console.error('Error preparing item for DynamoDB:', error);
-  //   }
-  // };
