@@ -12,7 +12,7 @@ import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import styles from '../styles/Home.module.css';
 
-const pages = ['Home 🏠', 'Chat 💬', 'Workspaces 🛠️', 'Playground 🛝', 'Profile 👤', 'Exit ⏏️'];
+const pages = ['Home 🏠', 'Chat 💬', 'Workspaces 🛠️', 'Profile 👤', 'Exit ⏏️'];
 
 const ResponsiveAppBar = () => {
   const [anchorElNav, setAnchorElNav] = useState(null);
@@ -28,9 +28,6 @@ const ResponsiveAppBar = () => {
     if (event.target.innerText === 'Chat 💬') {
       return window.location.href = `/chat`;
     } 
-    if (event.target.innerText === 'Playground 🛝') {
-      return window.location.href = `/workspaces/home`;
-    }
     if (event.target.innerText === 'Workspaces 🛠️') {
       return window.location.href = `/workspaces/play-ground`;
     }
@@ -54,9 +51,6 @@ const ResponsiveAppBar = () => {
     }
     if (event.target.innerText === 'CHAT 💬') {
       return window.location.href = `/chat`;
-    }
-    if (event.target.innerText === 'PLAYGROUND 🛝') {
-      return window.location.href = `/workspaces/home`;
     }
     if (event.target.innerText === 'WORKSPACES 🛠️') {
       return window.location.href = `/workspaces/play-ground`;
@@ -92,7 +86,7 @@ const ResponsiveAppBar = () => {
             component="a"
             href="/"
             sx={{
-              mr: 2,
+              mr: 25,
               display: { xs: 'none', md: 'flex' },
               fontFamily: 'monospace',
               fontWeight: 700,

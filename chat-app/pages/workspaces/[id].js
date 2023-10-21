@@ -162,7 +162,7 @@ export default function Workspaces() {
     <>
     <ResponsiveAppBar/>
     <div className="flex gap-4">
-      <div className="p-3 w-1/6 bg-teal-100 m-4 ">
+      <div className="p-3 w-1/6 bg-teal-100 m-4 rounded-2xl">
         <h1 className="text-xl text-teal-600 mt-20">Workspaces</h1>
         <ul>
           {channels.map(channel => (

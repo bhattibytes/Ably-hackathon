@@ -23,6 +23,7 @@ const AblyChatComponent = () => {
   const [messagesFromDB, setMessagesFromDB] = useState([]);
   const [members, setMembers] = useState([]);
   const [registeredUsers, setRegisteredUsers] = useState([]); 
+  const [regNames, setRegNames] = useState([]);
   const [membersTyping, setMembersTyping] = useState([]);
 
   async function queryUsersWithPartiQL() {
@@ -81,10 +82,13 @@ const AblyChatComponent = () => {
     return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
       if (data.Items.length) {
         let usersFromDB = [];
+        let namesFromDB = [];
         data.Items[0].userNames.SS.forEach((item, index) => {
           usersFromDB.push({name: item, email: data.Items[0].userEmails.SS[index], image: data.Items[0].userImages.SS[index]});
+          namesFromDB.push(item);
         });
         setRegisteredUsers([...usersFromDB]);
+        setRegNames([...namesFromDB]);
       }
     }).catch((error) => {
       console.log('error: ', error);  
@@ -110,10 +114,8 @@ const AblyChatComponent = () => {
   );
 
   const saveUserToDB = () => {
-    registeredUsers.forEach((user) => {
-      if (user.email === session.user.email) {
-        return;
-      } else {
+  if (!regNames.includes(session.user.name) && registeredUsers.length) {
+    console.log('Inside IF name is not in registeredUsers for saveUserToDB');
         dynamodb.updateItem({
           TableName: 'ably_registered',
           Key: {
@@ -134,7 +136,6 @@ const AblyChatComponent = () => {
           }
         });
       }
-    })
   }
 
   const saveDirectMessageToDB = async (name, email, image, msg) => {
@@ -567,7 +568,6 @@ const AblyChatComponent = () => {
         }
       });
     });
-   
   }
 
   const handleOpenOverlay = () => {
