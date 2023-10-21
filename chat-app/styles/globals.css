@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+.live-cursors-container {
+  @apply w-full flex justify-center items-center relative;
+  
+  background-color: transparent;
+  height: 100vh;
+}
+
+.moving{
+  position: absolute;
+  z-index: 20;
+  margin: 0;
+  margin-top: 3px;
+}
 
 p.chatText {
   margin: -10px -10px -10px -10px;

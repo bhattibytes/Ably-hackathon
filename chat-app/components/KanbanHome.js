@@ -1,10 +1,16 @@
-import React, { useState, useEffect } from "react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import styles from "../styles/Kaban.module.css";
 import ResponsiveAppBar from "./ResponsiveAppBar";
-
+import React, { useMemo,useState , useRef, useEffect, useContext } from "react";
+import { mockNames } from "../utils/mockNames";
+import { colours } from "../utils/helper";
+import useSpaceMembers from "../utils/useMembers";
+import { MemberCursors, YourCursor } from "../utils/Cursors";
+import { SpacesContext } from "../utils/SpacesContext";
 
 // fake data generator
+const mockName = () => mockNames[Math.floor(Math.random() * mockNames.length)];
+
 const getItems = (count, offset = 0) =>
   Array.from({ length: count }, (v, k) => k).map(k => ({
     id: `item-${k + offset}-${new Date().getTime()}`,
@@ -67,6 +73,25 @@ export default function Kanban() {
   const [headers, setHeaders] = useState([]);
   const [task , setTask] = useState('');
   const [itemCount, setItemCount] = useState(40);
+
+  const name = useMemo(mockName, []);
+  /** 💡 Select a color to assign randomly to a new user that enters the space💡 */
+  const userColors = useMemo(
+    () => colours[Math.floor(Math.random() * colours.length)],
+    []
+  );
+
+  /** 💡 Get a handle on a space instance 💡 */
+  const space = useContext(SpacesContext);
+
+  useEffect(() => {
+    space?.enter({ name, userColors });
+  }, [space]);
+
+  const { self, otherMembers } = useSpaceMembers(space);
+
+  const liveCursors = useRef(null);
+
 
   function onDragEnd(result) {
     const { source, destination } = result;
@@ -192,8 +217,26 @@ export default function Kanban() {
 
   return (
     <>
-      <ResponsiveAppBar />
-      <div className={styles.kabanMain}>
+
+      <div
+        id="live-cursors"
+        ref={liveCursors}
+        className="live-cursors-container relative example-container"
+      >
+        <YourCursor
+          self={self}
+          space={space}
+          parentRef={liveCursors}
+        />
+        <MemberCursors
+          otherUsers={
+            otherMembers.filter((m) => m.isConnected)
+          }
+          space={space}
+          selfConnectionId={self?.connectionId}
+        />
+        <ResponsiveAppBar />
+        <div className={styles.kabanMain}>
         <input 
           className={styles.inputNewGroup}
           type="text" 
@@ -340,6 +383,13 @@ export default function Kanban() {
           </DragDropContext>
         </div>
       </div>
+      </div>
+    
+      
+      
+      
+    
+          
     </>
   );
 }

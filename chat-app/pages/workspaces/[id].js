@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import AWS from 'aws-sdk';
 import ResponsiveAppBar from '../../components/ResponsiveAppBar';
 import { v4 as uuidv4 } from 'uuid';
+import { SpaceContextProvider } from "../../utils/SpacesContext";
 
 AWS.config.update({
   region: 'us-east-2',
@@ -160,6 +161,7 @@ export default function Workspaces() {
 
   return (
     <>
+    <SpaceContextProvider>
     <ResponsiveAppBar/>
     <div className="flex gap-4">
       <div className="p-3 w-1/6 bg-teal-100 m-4 ">
@@ -193,6 +195,8 @@ export default function Workspaces() {
         )}
       </div>
     </div>
+    </SpaceContextProvider>
+    
     </>
     
   );
