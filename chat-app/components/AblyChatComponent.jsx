@@ -40,6 +40,17 @@ const AblyChatComponent = () => {
     const statement = 'SELECT * FROM "ably_direct_messages"';
     return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
       if (data.Items.length) {
+        let membersFromDB = [];
+        data.Items.forEach((item) => {
+          if (item.memberEmails.SS.includes(session.user.email)) {
+            item.memberNames.SS.forEach((name) => {
+              if (!membersFromDB.includes(name)) {
+                membersFromDB.push(name);
+              }
+            });
+          }
+        });
+        setPrivateMessages([...membersFromDB]);
         setDirectMessagesFromDB(data.Items);
       }
     }).catch((error) => {
@@ -89,12 +100,14 @@ const AblyChatComponent = () => {
       console.log('error: ', error);  
       reject(error);
     }).then (() => {
-      setMessagesFromDB((messagesFromDB)=> [...messagesFromDB, ...messagesFromDBCall]);
+      setMessagesFromDB((messagesFromDB)=> { 
+        if (Array.isArray(messagesFromDB)) {
+          return [...messagesFromDB, ...messagesFromDBCall]
+        }
+      });
       });
     }
   );
-
- 
 
   const saveUserToDB = () => {
     registeredUsers.forEach((user) => {
@@ -124,27 +137,51 @@ const AblyChatComponent = () => {
     })
   }
 
-  const saveDirectMessageToDB = async (messageText) => {
-    dynamodb.putItem({
-      TableName: 'ably_direct_messages',
-      Item: {
-        'id': { S: uuidv4() },
-        'email': { S: session.user.email },
-        'name': { S: session.user.name },
-        'image': { S: session.user.image },
-        'timestamp': { S: new Date().toISOString() },
-        'connectionId': { S: realtime.connection.id },
-        'message': { S: messageText },
-        'channel': { S: channelName },
-        'members': { SS: [session.user.name] },
-      }
-    }, function(err, data) {
-      if (err) {
-        console.log('Error', err);
-      } else {
-        console.log('Success MSG: ', data);
-      }
+  const saveDirectMessageToDB = async (name, email, image, msg) => {
+    directMessagesFromDB.forEach((message) => {
+      if (message.ownerEmail.S === session.user.email && message.memberEmails.SS.includes(email)) {
+        console.log('Inside IF for saveDirectMessageToDB');
+        dynamodb.updateItem({
+          TableName: 'ably_direct_messages',
+          Key: {
+            'id': { S: message.id.S },
+          },
+          UpdateExpression: 'ADD messages :messages',
+          ExpressionAttributeValues: {
+            ':messages': { SS: [msg] },
+          },
+          ReturnValues: 'ALL_NEW',
+        }, function(err, data) {
+          if (err) {
+            console.log('Error', err);
+          } else {
+            console.log('Success MSG: ', data);
+          }
+        });
+      } 
     });
+    if (!privateMessages.includes(name)) {
+      console.log('Inside IF name is not in privateMessages for saveDirectMessageToDB');
+      dynamodb.putItem({
+        TableName: 'ably_direct_messages',
+        Item: {
+          'id': { S: uuidv4() },
+          'ownerName' : { S: session.user.name },
+          'ownerEmail' : { S: session.user.email },
+          'memberEmails': { SS: [session.user.email, email] },
+          'memberNames': { SS: [session.user.name, name] },
+          'memberImages': { SS: [session.user.image, image] },
+          'timestamp': { S: new Date().toISOString() },
+          'messages': { SS: [msg] },
+        }
+      }, function(err, data) {
+        if (err) {
+          console.log('Error', err);
+        } else {
+          console.log('Success MSG: ', data);
+        }
+      });
+    }
   }
 
 
@@ -270,6 +307,7 @@ const AblyChatComponent = () => {
   
     setMessagesFromDB(async() => await queryUsersWithPartiQL());
     setPrivateChannels(async() => await queryChannelsWithPartiQL());
+    setPrivateMessages(async() => await queryDirectMsgsWithPartiQL());
   }, [session]);
 
   var parsedMessages = [];
@@ -314,12 +352,23 @@ const AblyChatComponent = () => {
   const overlay = document.querySelector('div#overlay');
 
   const sendChatMessage = async (messageText) => {
-    if (messageText !== '') {
+    // console.log('Inside sendChatMessage privateMessages: ', privateMessages);
+    if (messageText !== '' && !privateMessages.includes(channelName)) {
       await channel.publish({ 
         name: channelName, 
-        data: `<strong>${messageText.slice(3, -4) + '</strong>' + '<em id="date">at '+ new Date().toLocaleString().split(',')[1]}</em>` 
+        data: `<strong>${messageText.slice(3, -4) + '</strong>' + '<em id="date">at '+ new Date().toLocaleString().split(',')[1]}</em>`,
+        dm: false,
       });
       setTimeout(() => { setMessagesFromDB(queryUsersWithPartiQL()); }, 50);
+    } else if (messageText !== '' && privateMessages.includes(channelName)) {
+      console.log('sending dm');
+      await channel.publish({ 
+        name: channelName, 
+        data: `<strong>${messageText.slice(3, -4) + '</strong>' + '<em id="date">at '+ new Date().toLocaleString().split(',')[1]}</em>`,
+        dm: true,
+        user: session.user.name,
+      });
+      setTimeout(() => { setMessagesFromDB(queryDirectMsgsWithPartiQL()); }, 50);
     }
   }
   
@@ -439,12 +488,12 @@ const AblyChatComponent = () => {
       return members.map((member, i) => {
         return (
           <div className={styles.onlineUsersList} key={`${i}=MemberList`}>
-            <img src={member.image} width={40} style={{ borderRadius: "25px" }} onClick={sendPrivateMessage} id={member.author}/> 
+            <img src={member.image} width={40} style={{ borderRadius: "25px", border: "1px solid white" }} onClick={sendPrivateMessage} id={`${member.author}, ${member.email}`}/> 
             <span className={styles.onlineName}>{member.author}
             { membersTyping.map((memberType, index) => {
               if (memberType.author === member.author && memberType.isTyping === true && messageText !== '' ) {
               return (
-                <img className={styles.typing} id="typing-indicator" src="https://www.slicktext.com/images/common/typing-indicator-loader.gif"/>
+                <img key={index} className={styles.typing} id="typing-indicator" src="https://www.slicktext.com/images/common/typing-indicator-loader.gif"/>
               )
             } else {
               return null;
@@ -457,7 +506,6 @@ const AblyChatComponent = () => {
     }
     if (code === 2) {
       return registeredUsers.map((member, i) => {
-        console.log(member);
         return (
           <div key={`${i}=MemberInvite`} className={styles.overlayMem}>
             <img src={member.image} width={60} style={{ borderRadius: "40px" }} id={member.name}/>
@@ -477,30 +525,49 @@ const AblyChatComponent = () => {
   }
 
   const sendPrivateMessage = (e) => {
-    if (e.target.id === session.user.name) {
+    const name = e.target.id.split(',')[0]
+    const email = e.target.id.split(',')[1]
+    const image = e.target.src;
+    if (name === session.user.name) {
       alert("You cannot send a private message to yourself")
       return;
     }
-    if (privateMessages.includes(e.target.id)) {
+    if (Array.isArray(privateMessages) && privateMessages.includes(name)) {
       alert("You are already in a private chat with this user")
       return;
     }
 
-    setChannelName(e.target.id);
+    const firstMessage = `A New Private Message chat with <strong>"${name}"</strong> was created <em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>`;
 
-    const newChannel = realtime.channels.get(e.target.id);
+    // console.log('Inside sendPrivateMessage name and email: ', name, email);
+
+    saveDirectMessageToDB(name, email, image, firstMessage)
+
+    setChannelName(name);
+
+    const newChannel = realtime.channels.get(name);
         newChannel.attach();
         newChannel.publish({ 
-          name: e.target.id, 
-          data: `A New Private Message chat with <strong>"${e.target.id}"</strong> was created <em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>` 
+          name: name, 
+          data: firstMessage
         });
     setPrivateMessages((privateMessages)=> {
+      console.log('privateMessages: ', privateMessages);
       if (Array.isArray(privateMessages)) {
-        return [...privateMessages, e.target.id]
+        return [...privateMessages, name]
       } else {
-        return [e.target.id]
+        return [name]
       }
     });
+    newChannel.history((err, page) => {
+      let messages = page.items.reverse();
+      setMessagesFromDB((messagesFromDB)=>{
+        if (Array.isArray(messagesFromDB)) {
+          return [...messagesFromDB, ...messages]
+        }
+      });
+    });
+   
   }
 
   const handleOpenOverlay = () => {
@@ -539,7 +606,7 @@ const AblyChatComponent = () => {
   useEffect( () => {
     addRegisteredUsers();
     saveUserToDB();
-    // queryDirectMsgsWithPartiQL();
+    queryDirectMsgsWithPartiQL();
   }, []);
 
   useEffect(() => {
@@ -547,8 +614,14 @@ const AblyChatComponent = () => {
   });
 
   return (
+    // console.log('privateMessages: ', privateMessages),
+    // console.log('DirectMessages: ', directMessagesFromDB),
     <>
       <div className={styles.mainContainer}>
+        <div className={styles.chatUserContainer}>
+          <p className={styles.chatTitle}>DM Online Members</p>
+          <div className={styles.chatUser}>{ getUniqueMembers(1) }</div>
+        </div>
       <div className={styles.privateChannelsUserListContainer}>  
           {getUniqueMembers(3).map((member, i) => {
             return member.channelMembersImg.SS.map((memberImg) => {
@@ -606,18 +679,14 @@ const AblyChatComponent = () => {
       </span>
       ): <span></span>}
       <br/>
-      {/* <span className={styles.channelTitle}>MESSAGES</span> */}
-      <div className={styles.chatUserContainer}>
-        <p className={styles.chatTitle}>DM Online Members</p>
-        <div className={styles.chatUser}>{ getUniqueMembers(1) }</div>
-      </div>
+      <span className={styles.channelTitle}>MESSAGES</span>
       {Array.isArray(privateMessages) && privateMessages.length ? privateMessages.map((pMsg, index) => 
-      <span key={`${index}=PrivMessages`}>
-        <p className={styles.channelListItems} onClick={(e) => switchChannel(e)}>
-        <span className={styles.hashTag}>#</span>
-          {pMsg}
-        </p>
-      </span>
+        <span key={`${index}=PrivMessages`}>
+          <p className={styles.channelListItems} onClick={(e) => switchChannel(e)}>
+          <span className={styles.hashTag}>#</span>
+            {pMsg}
+          </p>
+        </span>
       ): null}
       </div>
       </div>

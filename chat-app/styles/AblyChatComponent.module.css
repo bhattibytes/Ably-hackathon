@@ -166,22 +166,22 @@
 }
 
 .chatUserContainer {
-  margin-left: -20px;
-  height: 300px;
+  position: absolute;
+  right: 0;
+  top: 70px;
+  border: 1px solid #eee;
+  height: 230px;
   width: 250px;
   overflow-y: scroll;
   overflow-x: hidden;
 }
 
 .chatUser {
-  display: flex;
-  flex-direction: column;
-  justify-content: left;
+  position: absolute;
+  right: 0;
   margin-top: 10px;
   margin-left: 5px;
-  margin-bottom: 10px;
-  color: white;
-  width: 300px;
+  width: 220px;
 }
 
 .chatTitle {
@@ -308,6 +308,7 @@
   border-radius: 5px;
   margin-bottom: 2px;
   font-size: 14px;
+  color: black;
 }
 
 .button {
