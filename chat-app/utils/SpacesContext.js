@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Spaces from "@ably/spaces";
-import { useAbly } from "ably/react";
 import { v4 as uuidv4 } from "uuid";
 import { Realtime } from "ably";
 

@@ -1,13 +1,11 @@
 import { useEffect } from "react";
 
-// 💡 This hook is used to get the cursor position of the user and update the cursor position in the space
 const useCursor = (setCursorPosition, parentRef, space, selfConnectionId) => {
   let handleSelfCursorMove = () => {};
   useEffect(() => {
     if (!space || !selfConnectionId) return;
     const container = document.querySelector("#live-cursors");
 
-    // 💡 This function is used to update the cursor position in the space
     const handleSelfCursorMove = (e) => {
       if (!document.hasFocus()) return;
 
