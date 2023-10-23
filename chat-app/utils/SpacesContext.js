@@ -7,7 +7,7 @@ import { getSpaceNameFromUrl } from "./helper";
 
 const client = new Realtime.Promise({
     clientId: uuidv4(),
-    key: "2G93Ow.tGqEGw:rLw9dV_6eqF8n7aX2Cx4WtIq2MX5R5-NT-QplBJwsGo",
+    key: process.env.SPACES_API_KEY,
   }); 
 
 const SpacesContext = React.createContext(undefined);

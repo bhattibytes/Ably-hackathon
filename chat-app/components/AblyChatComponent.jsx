@@ -114,28 +114,29 @@ const AblyChatComponent = () => {
   );
 
   const saveUserToDB = () => {
-  if (!regNames.includes(session.user.name) && registeredUsers.length) {
-    console.log('Inside IF name is not in registeredUsers for saveUserToDB');
-        dynamodb.updateItem({
-          TableName: 'ably_registered',
-          Key: {
-            'id': { S: '1' },
-          },
-          UpdateExpression: 'ADD userEmails :userEmails, userNames :userNames, userImages :userImages',
-          ExpressionAttributeValues: {
-            ':userEmails': { SS: [session.user.email] },
-            ':userNames': { SS: [session.user.name] },
-            ':userImages': { SS: [session.user.image] },
-          },
-          ReturnValues: 'ALL_NEW',
-        }, function(err, data) {
-          if (err) {
-            console.log('Error', err);
-          } else {
-            console.log('Success MSG: ', data);
-          }
-        });
-      }
+    console.log('Inside saveUserToDB: ', session.user.name, regNames);
+    if (!regNames.includes(session.user.name) && registeredUsers.length) {
+      console.log('Inside IF name is not in registeredUsers for saveUserToDB');
+          dynamodb.updateItem({
+            TableName: 'ably_registered',
+            Key: {
+              'id': { S: '1' },
+            },
+            UpdateExpression: 'ADD userEmails :userEmails, userNames :userNames, userImages :userImages',
+            ExpressionAttributeValues: {
+              ':userEmails': { SS: [session.user.email] },
+              ':userNames': { SS: [session.user.name] },
+              ':userImages': { SS: [session.user.image] },
+            },
+            ReturnValues: 'ALL_NEW',
+          }, function(err, data) {
+            if (err) {
+              console.log('Error', err);
+            } else {
+              console.log('Success MSG: ', data);
+            }
+          });
+    }
   }
 
   const saveDirectMessageToDB = async (name, email, image, msg) => {
@@ -607,7 +608,7 @@ const AblyChatComponent = () => {
     addRegisteredUsers();
     saveUserToDB();
     queryDirectMsgsWithPartiQL();
-  }, []);
+  }, [registeredUsers.length]);
 
   useEffect(() => {
     messageEnd.scrollIntoView({ behaviour: "smooth" });

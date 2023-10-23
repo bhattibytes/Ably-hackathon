@@ -12,6 +12,7 @@ const nextConfig = {
     TWITTER_CONSUMER_SECRET: process.env.TWITTER_CONSUMER_SECRET,
     GITHUB_ID: process.env.GITHUB_ID,
     GITHUB_SECRET: process.env.GITHUB_SECRET,
+    SPACES_API_KEY: process.env.SPACES_API_KEY,
   }
 }
 
