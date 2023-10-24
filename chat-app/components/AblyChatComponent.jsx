@@ -17,7 +17,7 @@ const AblyChatComponent = () => {
   const [channels, setChannels] = useState(["home", "charla", "general", "random", "help", "dev"]);
   const [privateChannels, setPrivateChannels] = useState([]);
   const [allPrivateChannelInfo, setallPrivateChannelInfo] = useState([{}]);
-  const [privateMessages, setPrivateMessages] = useState([]);
+  const [directMessageChannels, setDirectMessageChannels] = useState([]);
   const [directMessagesFromDB, setDirectMessagesFromDB] = useState([]);
   const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
@@ -42,6 +42,7 @@ const AblyChatComponent = () => {
     return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
       if (data.Items.length) {
         let membersFromDB = [];
+        // console.log('Inside queryDirectMessages --> data.Items: ', data.Items);
         data.Items.forEach((item) => {
           if (item.memberEmails.SS.includes(session.user.email)) {
             item.memberNames.SS.forEach((name) => {
@@ -51,7 +52,7 @@ const AblyChatComponent = () => {
             });
           }
         });
-        setPrivateMessages([...membersFromDB]);
+        setDirectMessageChannels([...membersFromDB]);
         setDirectMessagesFromDB(data.Items);
       }
     }).catch((error) => {
@@ -83,8 +84,8 @@ const AblyChatComponent = () => {
       if (data.Items.length) {
         let usersFromDB = [];
         let namesFromDB = [];
-        data.Items[0].userNames.SS.forEach((item, index) => {
-          usersFromDB.push({name: item, email: data.Items[0].userEmails.SS[index], image: data.Items[0].userImages.SS[index]});
+        data.Items[0].userNames.L.forEach((item, index) => {
+          usersFromDB.push({name: item, email: data.Items[0].userEmails.L[index], image: data.Items[0].userImages.L[index]});
           namesFromDB.push(item);
         });
         setRegisteredUsers([...usersFromDB]);
@@ -113,44 +114,58 @@ const AblyChatComponent = () => {
     }
   );
 
-  const saveUserToDB = () => {
-    console.log('Inside saveUserToDB: ', session.user.name, regNames);
-    if (!regNames.includes(session.user.name) && registeredUsers.length) {
-      console.log('Inside IF name is not in registeredUsers for saveUserToDB');
-          dynamodb.updateItem({
-            TableName: 'ably_registered',
-            Key: {
-              'id': { S: '1' },
-            },
-            UpdateExpression: 'ADD userEmails :userEmails, userNames :userNames, userImages :userImages',
-            ExpressionAttributeValues: {
-              ':userEmails': { SS: [session.user.email] },
-              ':userNames': { SS: [session.user.name] },
-              ':userImages': { SS: [session.user.image] },
-            },
-            ReturnValues: 'ALL_NEW',
-          }, function(err, data) {
-            if (err) {
-              console.log('Error', err);
-            } else {
-              console.log('Success MSG: ', data);
-            }
-          });
-    }
+  const saveUserToDB = async () => {
+    let userInDB = false;
+    return await new Promise((resolve, reject) => {
+      resolve(regNames.forEach((name) => {
+        if (name.S === session.user.name) {
+          userInDB = true;
+          console.log('User was found in DB');
+        }
+      }));
+    }).then(() => {
+      if (userInDB === false && registeredUsers.length) {
+        dynamodb.updateItem({
+          TableName: 'ably_registered',
+          Key: {
+            'id': { S: '1' },
+          },
+          UpdateExpression: 'SET userEmails = list_append(userEmails, :userEmails), userNames = list_append(userNames, :userNames), userImages = list_append(userImages, :userImages)',
+          ExpressionAttributeValues: {
+            ':userEmails': { L: [{S: session.user.email}] },
+            ':userNames': { L: [{S: session.user.name}] },
+            ':userImages': { L: [{S: session.user.image}] },
+          },
+          ReturnValues: 'ALL_NEW',
+        }, function(err, data) {
+          if (err) {
+            console.log('Error', err);
+          } else {
+            console.log('Success MSG: ', data);
+          }
+        });
+  }}).catch((error) => {
+      console.log('error: ', error);  
+      reject(error);
+    });
   }
 
   const saveDirectMessageToDB = async (name, email, image, msg) => {
-    directMessagesFromDB.forEach((message) => {
+    console.log('directMessagesFromDB: ', directMessagesFromDB)
+    // console.log('directMessageChannels: ', directMessageChannels.then((data) => console.log('data: ', data)));
+    Array.isArray(directMessagesFromDB) && directMessagesFromDB.forEach((message) => {
       if (message.ownerEmail.S === session.user.email && message.memberEmails.SS.includes(email)) {
-        console.log('Inside IF for saveDirectMessageToDB');
+        console.log('Inside IF for saveDirectMessageToDB DOES THIS EVER GO HERE!!!!');
         dynamodb.updateItem({
           TableName: 'ably_direct_messages',
           Key: {
             'id': { S: message.id.S },
           },
-          UpdateExpression: 'ADD messages :messages',
+          UpdateExpression: 'SET messages = list_append(messages, :messages), messageAuthors = list_append(messageAuthors, :messageAuthors), messageAuthorImgs = list_append(messageAuthorImgs, :messageAuthorImgs)',
           ExpressionAttributeValues: {
-            ':messages': { SS: [msg] },
+            ':messages': { L: [{ S: msg }] },
+            ':messageAuthors': { L: [{ S: session.user.name }] },
+            ':messageAuthorImgs': { L: [{ S: session.user.image }] },
           },
           ReturnValues: 'ALL_NEW',
         }, function(err, data) {
@@ -162,8 +177,8 @@ const AblyChatComponent = () => {
         });
       } 
     });
-    if (!privateMessages.includes(name)) {
-      // console.log('Inside IF name is not in privateMessages for saveDirectMessageToDB');
+    console.log('directMessageChannels: ', directMessageChannels);
+    if (directMessageChannels && directMessageChannels.then((data) => data === undefined )) {
       dynamodb.putItem({
         TableName: 'ably_direct_messages',
         Item: {
@@ -174,7 +189,32 @@ const AblyChatComponent = () => {
           'memberNames': { SS: [session.user.name, name] },
           'memberImages': { SS: [session.user.image, image] },
           'timestamp': { S: new Date().toISOString() },
-          'messages': { SS: [msg] },
+          'messages': { L: [{ S: msg }] },
+          'messageAuthors': { L: [{ S: session.user.name }] },
+          'messageAuthorImgs': { L: [{ S: session.user.image }] },
+        }
+      }, function(err, data) {
+        if (err) {
+          console.log('Error', err);
+        } else {
+          console.log('Success MSG: ', data);
+        }
+      });
+    } else if ( Array.isArray(directMessageChannels) && !directMessageChannels.includes(name)) {
+      console.log('Inside IF name is not in directMessageChannels for saveDirectMessageToDB');
+      dynamodb.putItem({
+        TableName: 'ably_direct_messages',
+        Item: {
+          'id': { S: uuidv4() },
+          'ownerName' : { S: session.user.name },
+          'ownerEmail' : { S: session.user.email },
+          'memberEmails': { SS: [session.user.email, email] },
+          'memberNames': { SS: [session.user.name, name] },
+          'memberImages': { SS: [session.user.image, image] },
+          'timestamp': { S: new Date().toISOString() },
+          'messages': { L: [{ S: session.user.name, S: msg }] },
+          'messageAuthors': { L: [{ S: session.user.name }] },
+          'messageAuthorImgs': { L: [{ S: session.user.image }] },
         }
       }, function(err, data) {
         if (err) {
@@ -185,7 +225,6 @@ const AblyChatComponent = () => {
       });
     }
   }
-
 
   const saveChannelToDB = async (channelName) => {
     if (privateChannels.includes(channelName)) {
@@ -309,68 +348,127 @@ const AblyChatComponent = () => {
   
     setMessagesFromDB(async() => await queryUsersWithPartiQL());
     setPrivateChannels(async() => await queryChannelsWithPartiQL());
-    setPrivateMessages(async() => await queryDirectMsgsWithPartiQL());
+    setDirectMessageChannels(async() => await queryDirectMsgsWithPartiQL());
   }, [session]);
 
   var parsedMessages = [];
-  if (messagesFromDB?.length && session && status === 'authenticated') {
-      var sorted = messagesFromDB.sort((a, b) => new Date(a.timestamp.S).getTime() - new Date(b.timestamp.S).getTime() );
-      sorted = sorted.filter((message) => message.channel ? message.channel.S === channelName : null );
-      
+  if (Array.isArray(messagesFromDB) && Array.isArray(directMessagesFromDB) && Array.isArray(privateChannels)) {
+    if ((channels.includes(channelName) || privateChannels.includes(channelName)) && messagesFromDB?.length && session && status === 'authenticated') {
+        var sorted = messagesFromDB.sort((a, b) => new Date(a.timestamp.S).getTime() - new Date(b.timestamp.S).getTime() );
+        sorted = sorted.filter((message) => message.channel ? message.channel.S === channelName : null );
+        
+        parsedMessages = sorted.map((message, index) => {
+          let parsedMessage;
+          const author = message.author.S
+          try {
+            parsedMessage = parse(message.message.S);
+          } catch (error) {
+            console.log(error);
+            parsedMessage = message.message.S;
+          } 
+          return (
+            <span key={`${index}=Messages`} className={styles.messages}>
+              { session.user.email === message.email.S ? 
+                <>
+                  <img height={40} className={styles.messageImgMe} src={message.image.S}/>   
+                  <span className={styles.messageMe} data-author={author}>
+                    <span className={styles.authorMe}>{author}<br/></span>
+                    <span className={styles.parsedMsgMe}>{parsedMessage}</span>
+                  </span>     
+                </>
+                :
+                <>
+                  <span className={styles.message} data-author={author}> 
+                    <span id="other" className={styles.author}>{author}<br/></span>
+                    <span className={styles.parsedMsg}>{parsedMessage}</span>
+                  </span>
+                  <img height={40} className={styles.messageImg} src={message.image.S}/>
+                </>
+              }
+            </span>
+            )
+        });
+    } else if ((!channels.includes(channelName) && !privateChannels.includes(channelName)) && directMessagesFromDB?.length && session && status === 'authenticated') {
+      var sorted = directMessagesFromDB.sort((a, b) => new Date(a.timestamp.S).getTime() - new Date(b.timestamp.S).getTime() );
+      sorted = sorted.filter((message) => message.memberEmails.SS.includes(session.user.email));
+
       parsedMessages = sorted.map((message, index) => {
         let parsedMessage;
-        const author = message.author.S
-        try {
-          parsedMessage = parse(message.message.S);
-        } catch (error) {
-          console.log(error);
-          parsedMessage = message.message.S;
-        } 
-        return (
-          <span key={`${index}=Messages`} className={styles.messages}>
-            { session.user.email === message.email.S ? 
-              <>
-                <img height={40} className={styles.messageImgMe} src={message.image.S}/>   
-                <span className={styles.messageMe} data-author={author}>
-                  <span className={styles.authorMe}>{author}<br/></span>
-                  <span className={styles.parsedMsgMe}>{parsedMessage}</span>
-                </span>     
-              </>
-              :
-              <>
-                <span className={styles.message} data-author={author}> 
-                  <span id="other" className={styles.author}>{author}<br/></span>
-                  <span className={styles.parsedMsg}>{parsedMessage}</span>
-                </span>
-                <img height={40} className={styles.messageImg} src={message.image.S}/>
-              </>
-            }
-          </span>
+        let authorFirstName;
+        let authorImg;
+        let allMessages = [];
+        for (let i = 0; i < message.messages.L.length; i++) {
+          try {
+            parsedMessage = parse(message.messages.L[i].S);
+          }
+          catch (error) {
+            console.log(error);
+            parsedMessage = message.messages.L[i].S;
+          }
+          authorFirstName = message.messageAuthors.L[i].S.split(' ')[0];
+          authorImg = message.messageAuthorImgs.L[i].S;
+          allMessages.push(
+            <span key={`${i}=Messages`} className={styles.messages}>
+              { session.user.name.split(' ')[0] === authorFirstName ?
+                <>
+                  <img height={40} className={styles.messageImgMe} src={authorImg}/>
+                  <span className={styles.messageMe} data-author={authorFirstName}>
+                    <span className={styles.authorMe}>{authorFirstName}<br/></span>
+                    <span className={styles.parsedMsgMe}>{parsedMessage}</span>
+                  </span>
+                </>
+                :
+                <>
+                  <span className={styles.message} data-author={authorFirstName}>
+                    <span id="other" className={styles.author}>{authorFirstName}<br/></span>
+                    <span className={styles.parsedMsg}>{parsedMessage}</span>
+                  </span>
+                  <img height={40} className={styles.messageImg} src={authorImg}/>
+                </>
+              }
+            </span>
           )
-      });
+        }
+        return allMessages;
+    });
+    
+  }
   }
 
   const form = document.querySelector('form#chat-form');
   const overlay = document.querySelector('div#overlay');
 
   const sendChatMessage = async (messageText) => {
-    // console.log('Inside sendChatMessage privateMessages: ', privateMessages);
-    if (messageText !== '' && !privateMessages.includes(channelName)) {
+    console.log('Inside sendChatMessage directMessageChannels: ', directMessageChannels);
+    if (messageText !== '' && !directMessageChannels.includes(channelName)) {
       await channel.publish({ 
         name: channelName, 
         data: `<strong>${messageText.slice(3, -4) + '</strong>' + '<em id="date">at '+ new Date().toLocaleString().split(',')[1]}</em>`,
-        dm: false,
+        extras: { 
+          headers: { "x-ably-directMessage": false, "x-ably-channelName": channelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
+        }
       });
       setTimeout(() => { setMessagesFromDB(queryUsersWithPartiQL()); }, 50);
-    } else if (messageText !== '' && privateMessages.includes(channelName)) {
-      console.log('sending dm');
+    } else if (messageText !== '' && directMessageChannels.includes(channelName)) {
+      let dmID = '';
+      directMessagesFromDB.forEach((message) => {
+        console.log('Inside for each directMessagesFromDB: ', message.ownerEmail, message.memberEmails.SS);
+        if (message.ownerEmail.S === session.user.email && message.memberEmails.SS.includes(session.user.email)) {
+          dmID = message.id.S;
+        }
+      });
+      if (dmID !== '') {
       await channel.publish({ 
         name: channelName, 
         data: `<strong>${messageText.slice(3, -4) + '</strong>' + '<em id="date">at '+ new Date().toLocaleString().split(',')[1]}</em>`,
-        dm: true,
-        user: session.user.name,
+        extras: { 
+          headers: { "x-ably-directMessage": true, "x-ably-dmID": dmID, "x-ably-channelName": channelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
+        }
       });
       setTimeout(() => { setMessagesFromDB(queryDirectMsgsWithPartiQL()); }, 50);
+      } else {
+        console.log('dmID was not found');
+      }
     }
   }
   
@@ -490,7 +588,7 @@ const AblyChatComponent = () => {
       return members.map((member, i) => {
         return (
           <div className={styles.onlineUsersList} key={`${i}=MemberList`}>
-            <img src={member.image} width={40} style={{ borderRadius: "25px", border: "1px solid white" }} onClick={sendPrivateMessage} id={`${member.author}, ${member.email}`}/> 
+            <img src={member.image} width={40} style={{ borderRadius: "25px", border: "1px solid white" }} onClick={createPrivateMessage} id={`${member.author}, ${member.email}`}/> 
             <span className={styles.onlineName}>{member.author}
             { membersTyping.map((memberType, index) => {
               if (memberType.author === member.author && memberType.isTyping === true && messageText !== '' ) {
@@ -510,8 +608,8 @@ const AblyChatComponent = () => {
       return registeredUsers.map((member, i) => {
         return (
           <div key={`${i}=MemberInvite`} className={styles.overlayMem}>
-            <img src={member.image} width={60} style={{ borderRadius: "40px" }} id={member.name}/>
-            <button className={styles.inviteBtn} onClick={() => handleInviteUserToChannel(member.name, member.image)}>Invite</button> 
+            <img src={member.image.S} width={60} style={{ borderRadius: "40px" }} id={member.name.S}/>
+            <button className={styles.inviteBtn} onClick={() => handleInviteUserToChannel(member.name.S, member.image.S)}>Invite</button> 
           </div>
         )
       })
@@ -526,7 +624,7 @@ const AblyChatComponent = () => {
     }
   }
 
-  const sendPrivateMessage = (e) => {
+  const createPrivateMessage = (e) => {
     const name = e.target.id.split(',')[0]
     const email = e.target.id.split(',')[1]
     const image = e.target.src;
@@ -534,18 +632,17 @@ const AblyChatComponent = () => {
       alert("You cannot send a private message to yourself")
       return;
     }
-    if (Array.isArray(privateMessages) && privateMessages.includes(name)) {
+    if (Array.isArray(directMessageChannels) && directMessageChannels.includes(name)) {
       alert("You are already in a private chat with this user")
       return;
     }
 
     const firstMessage = `A New Private Message chat with <strong>"${name}"</strong> was created <em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>`;
 
-    // console.log('Inside sendPrivateMessage name and email: ', name, email);
+    console.log('Inside sendPrivateMessage name and email: ', name, email);
+    setChannelName(name);
 
     saveDirectMessageToDB(name, email, image, firstMessage)
-
-    setChannelName(name);
 
     const newChannel = realtime.channels.get(name);
         newChannel.attach();
@@ -553,10 +650,9 @@ const AblyChatComponent = () => {
           name: name, 
           data: firstMessage
         });
-    setPrivateMessages((privateMessages)=> {
-      console.log('privateMessages: ', privateMessages);
-      if (Array.isArray(privateMessages)) {
-        return [...privateMessages, name]
+    setDirectMessageChannels((directMessageChannels)=> {
+      if (Array.isArray(directMessageChannels)) {
+        return [...directMessageChannels, name]
       } else {
         return [name]
       }
@@ -615,8 +711,10 @@ const AblyChatComponent = () => {
   });
 
   return (
-    // console.log('privateMessages: ', privateMessages),
-    // console.log('DirectMessages: ', directMessagesFromDB),
+    // console.log('directMessageChannels: ', directMessageChannels),
+    // console.log('DiectMessages: ', directMessagesFromDB),
+    // console.log('saveDirectMessageToDB: ', directMessagesFromDB),
+    // console.log('privateChannels: ', privateChannels),
     <>
       <div className={styles.mainContainer}>
         <div className={styles.chatUserContainer}>
@@ -681,7 +779,7 @@ const AblyChatComponent = () => {
       ): <span></span>}
       <br/>
       <span className={styles.channelTitle}>MESSAGES</span>
-      {Array.isArray(privateMessages) && privateMessages.length ? privateMessages.map((pMsg, index) => 
+      {Array.isArray(directMessageChannels) && directMessageChannels.length ? directMessageChannels.map((pMsg, index) => 
         <span key={`${index}=PrivMessages`}>
           <p className={styles.channelListItems} onClick={(e) => switchChannel(e)}>
           <span className={styles.hashTag}>#</span>

@@ -22,7 +22,8 @@ export function useChannel(channelName, callbackOnMessage) {
   const onMount = () => {
    
     channel.subscribe(msg => { 
-      if (session && status === 'authenticated' && msg.connectionId === realtime.connection.id) {
+      // console.log('MSG: ', msg.extras.headers['x-ably-directMessage']);
+      if (session && status === 'authenticated' && msg.connectionId === realtime.connection.id &&  msg.extras.headers['x-ably-directMessage'] === false) {
         dynamodb.putItem({
           TableName: 'ably_users',
           Item: {
@@ -38,6 +39,29 @@ export function useChannel(channelName, callbackOnMessage) {
             'msgId': { S: msg.id },
             'clientId': { S: msg.clientId },
           }
+        }, function(err, data) {
+          if (err) {
+            console.log('Error', err);
+          } else {
+            console.log('Success MSG: ', msg);
+          }
+        });
+        // sending messages after private channel creation and sendMessageChat function
+      } else if (session && status === 'authenticated' && msg.connectionId === realtime.connection.id &&  msg.extras.headers['x-ably-directMessage'] === true) {
+        console.log('MSG inside sending direct message: ', msg);
+        dynamodb.updateItem({
+          TableName: 'ably_direct_messages',
+          Key: {
+            'id': { S: msg.extras.headers['x-ably-dmID']},
+          },
+          UpdateExpression: 'SET messages = list_append(messages, :messages), messageAuthors = list_append(messageAuthors, :messageAuthors), messageAuthorImgs = list_append(messageAuthorImgs, :messageAuthorImgs)',
+          ExpressionAttributeValues: {
+            ':messages': { L: [{ S: msg.data }] },
+            ':messageAuthors': { L: [{ S: session.user.name }] },
+            ':messageAuthorImgs': { L: [{ S: session.user.image }] },
+          },
+          ReturnValues: 'ALL_NEW',
+
         }, function(err, data) {
           if (err) {
             console.log('Error', err);
