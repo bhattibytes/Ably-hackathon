@@ -151,7 +151,7 @@ const AblyChatComponent = () => {
   }
 
   const saveDirectMessageToDB = async (name, email, image, msg) => {
-    console.log('directMessagesFromDB: ', directMessagesFromDB)
+    // console.log('directMessagesFromDB: ', directMessagesFromDB)
     // console.log('directMessageChannels: ', directMessageChannels.then((data) => console.log('data: ', data)));
     Array.isArray(directMessagesFromDB) && directMessagesFromDB.forEach((message) => {
       if (message.ownerEmail.S === session.user.email && message.memberEmails.SS.includes(email)) {
@@ -177,7 +177,7 @@ const AblyChatComponent = () => {
         });
       } 
     });
-    console.log('directMessageChannels: ', directMessageChannels);
+    // console.log('directMessageChannels: ', directMessageChannels);
     if (directMessageChannels && directMessageChannels.then((data) => data === undefined )) {
       dynamodb.putItem({
         TableName: 'ably_direct_messages',
@@ -200,7 +200,7 @@ const AblyChatComponent = () => {
           console.log('Success MSG: ', data);
         }
       });
-    } else if ( Array.isArray(directMessageChannels) && !directMessageChannels.includes(name)) {
+    } else if ( Array.isArray(directMessageChannels) && !directMessageChannels.includes(name) ) {
       console.log('Inside IF name is not in directMessageChannels for saveDirectMessageToDB');
       dynamodb.putItem({
         TableName: 'ably_direct_messages',
@@ -439,7 +439,7 @@ const AblyChatComponent = () => {
   const overlay = document.querySelector('div#overlay');
 
   const sendChatMessage = async (messageText) => {
-    console.log('Inside sendChatMessage directMessageChannels: ', directMessageChannels);
+    // console.log('Inside sendChatMessage directMessageChannels: ', directMessageChannels);
     if (messageText !== '' && !directMessageChannels.includes(channelName)) {
       await channel.publish({ 
         name: channelName, 
@@ -452,7 +452,7 @@ const AblyChatComponent = () => {
     } else if (messageText !== '' && directMessageChannels.includes(channelName)) {
       let dmID = '';
       directMessagesFromDB.forEach((message) => {
-        console.log('Inside for each directMessagesFromDB: ', message.ownerEmail, message.memberEmails.SS);
+        // console.log('Inside for each directMessagesFromDB: ', message.ownerEmail, message.memberEmails.SS);
         if (message.ownerEmail.S === session.user.email && message.memberEmails.SS.includes(session.user.email)) {
           dmID = message.id.S;
         }
@@ -639,7 +639,7 @@ const AblyChatComponent = () => {
 
     const firstMessage = `A New Private Message chat with <strong>"${name}"</strong> was created <em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>`;
 
-    console.log('Inside sendPrivateMessage name and email: ', name, email);
+    // console.log('Inside sendPrivateMessage name and email: ', name, email);
     setChannelName(name);
 
     saveDirectMessageToDB(name, email, image, firstMessage)
