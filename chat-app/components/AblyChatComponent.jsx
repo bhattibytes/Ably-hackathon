@@ -42,9 +42,10 @@ const AblyChatComponent = () => {
     return await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
       if (data.Items.length) {
         let membersFromDB = [];
-        // console.log('Inside queryDirectMessages --> data.Items: ', data.Items);
+        let itemToPull;
         data.Items.forEach((item) => {
-          if (item.memberEmails.SS.includes(session.user.email)) {
+          if (item.memberNames.SS.includes(session.user.name)) {
+            itemToPull = item;
             item.memberNames.SS.forEach((name) => {
               if (!membersFromDB.includes(name)) {
                 membersFromDB.push(name);
@@ -98,18 +99,30 @@ const AblyChatComponent = () => {
 
   const [channel, realtime] = useChannel(channelName, async (message) => {
     let messagesFromDBCall = [];
+    let directMessagesFromDBCall = [];
     setTimeout(async() => { messagesFromDBCall = await queryUsersWithPartiQL(); }, 10);
+    setTimeout(async() => { directMessagesFromDBCall = await queryDirectMsgsWithPartiQL(); }, 50);
     return new Promise((resolve, reject) => {
       resolve(messagesFromDBCall);
+      resolve(directMessagesFromDBCall);
     }).catch((error) => {
       console.log('error: ', error);  
       reject(error);
-    }).then (() => {
-      setMessagesFromDB((messagesFromDB)=> { 
-        if (Array.isArray(messagesFromDB)) {
-          return [...messagesFromDB, ...messagesFromDBCall]
-        }
-      });
+    }).then(() => {
+        setMessagesFromDB((messagesFromDB)=> { 
+          if (Array.isArray(messagesFromDB)) {
+            return [...messagesFromDB, ...messagesFromDBCall]
+          } else {
+            return [...messagesFromDBCall]
+          }
+        });
+        setDirectMessagesFromDB((directMessagesFromDB)=> { 
+          if (Array.isArray(directMessagesFromDB)) {
+            return [...directMessagesFromDB, ...directMessagesFromDBCall]
+          } else {
+            return [...directMessagesFromDBCall]
+          }
+        });
       });
     }
   );
@@ -151,11 +164,8 @@ const AblyChatComponent = () => {
   }
 
   const saveDirectMessageToDB = async (name, email, image, msg) => {
-    // console.log('directMessagesFromDB: ', directMessagesFromDB)
-    // console.log('directMessageChannels: ', directMessageChannels.then((data) => console.log('data: ', data)));
     Array.isArray(directMessagesFromDB) && directMessagesFromDB.forEach((message) => {
-      if (message.ownerEmail.S === session.user.email && message.memberEmails.SS.includes(email)) {
-        console.log('Inside IF for saveDirectMessageToDB DOES THIS EVER GO HERE!!!!');
+      if (message.memberEmails.SS.includes(email)) {
         dynamodb.updateItem({
           TableName: 'ably_direct_messages',
           Key: {
@@ -177,8 +187,10 @@ const AblyChatComponent = () => {
         });
       } 
     });
-    // console.log('directMessageChannels: ', directMessageChannels);
-    if (directMessageChannels && directMessageChannels.then((data) => data === undefined )) {
+    if ( typeof directMessageChannels === 'object' && 
+    typeof directMessageChannels.then === 'function' && 
+    directMessageChannels.then((data) => data === undefined 
+    )) {
       dynamodb.putItem({
         TableName: 'ably_direct_messages',
         Item: {
@@ -201,7 +213,6 @@ const AblyChatComponent = () => {
         }
       });
     } else if ( Array.isArray(directMessageChannels) && !directMessageChannels.includes(name) ) {
-      console.log('Inside IF name is not in directMessageChannels for saveDirectMessageToDB');
       dynamodb.putItem({
         TableName: 'ably_direct_messages',
         Item: {
@@ -349,6 +360,7 @@ const AblyChatComponent = () => {
     setMessagesFromDB(async() => await queryUsersWithPartiQL());
     setPrivateChannels(async() => await queryChannelsWithPartiQL());
     setDirectMessageChannels(async() => await queryDirectMsgsWithPartiQL());
+    setDirectMessagesFromDB(async() => await queryDirectMsgsWithPartiQL());
   }, [session]);
 
   var parsedMessages = [];
@@ -389,8 +401,7 @@ const AblyChatComponent = () => {
             )
         });
     } else if ((!channels.includes(channelName) && !privateChannels.includes(channelName)) && directMessagesFromDB?.length && session && status === 'authenticated') {
-      var sorted = directMessagesFromDB.sort((a, b) => new Date(a.timestamp.S).getTime() - new Date(b.timestamp.S).getTime() );
-      sorted = sorted.filter((message) => message.memberEmails.SS.includes(session.user.email));
+      var sorted = directMessagesFromDB.filter((message) => message.memberEmails.SS.includes(session.user.email));
 
       parsedMessages = sorted.map((message, index) => {
         let parsedMessage;
@@ -439,7 +450,6 @@ const AblyChatComponent = () => {
   const overlay = document.querySelector('div#overlay');
 
   const sendChatMessage = async (messageText) => {
-    // console.log('Inside sendChatMessage directMessageChannels: ', directMessageChannels);
     if (messageText !== '' && !directMessageChannels.includes(channelName)) {
       await channel.publish({ 
         name: channelName, 
@@ -452,8 +462,7 @@ const AblyChatComponent = () => {
     } else if (messageText !== '' && directMessageChannels.includes(channelName)) {
       let dmID = '';
       directMessagesFromDB.forEach((message) => {
-        // console.log('Inside for each directMessagesFromDB: ', message.ownerEmail, message.memberEmails.SS);
-        if (message.ownerEmail.S === session.user.email && message.memberEmails.SS.includes(session.user.email)) {
+        if (message.memberEmails.SS.includes(session.user.email)) {
           dmID = message.id.S;
         }
       });
@@ -464,8 +473,8 @@ const AblyChatComponent = () => {
         extras: { 
           headers: { "x-ably-directMessage": true, "x-ably-dmID": dmID, "x-ably-channelName": channelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
         }
-      });
-      setTimeout(() => { setMessagesFromDB(queryDirectMsgsWithPartiQL()); }, 50);
+      }); 
+      setTimeout(() => { setDirectMessagesFromDB(queryDirectMsgsWithPartiQL()) }, 50);
       } else {
         console.log('dmID was not found');
       }
@@ -561,10 +570,29 @@ const AblyChatComponent = () => {
     } else {
     const newChannel = realtime.channels.get(newChannelName);
     newChannel.attach();
-    newChannel.publish({ 
-      name: newChannelName, 
-      data: `Switched to channel: <strong>"${newChannelName}"</strong> <em id="date">at ${new Date().toLocaleString().split(',')[1]}</em>` 
-    });
+    if (directMessageChannels.includes(newChannelName)) {
+      let dmID = '';
+      directMessagesFromDB.forEach((message) => {
+        if (message.memberEmails.SS.includes(session.user.email)) {
+          dmID = message.id.S;
+        }
+      });
+      newChannel.publish({ 
+        name: newChannelName, 
+        data: `Switched to direct message with: <strong>"${newChannelName}"</strong> and <strong>"${session.user.name}"</strong> <em id="date">at ${new Date().toLocaleString().split(',')[1]}</em>`,
+        extras: { 
+          headers: { "x-ably-directMessage": true, "x-ably-dmID": dmID, "x-ably-channelName": newChannelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
+        }
+      });
+    } else {
+      newChannel.publish({ 
+        name: newChannelName, 
+        data: `Switched to channel: <strong>"${newChannelName}"</strong> <em id="date">at ${new Date().toLocaleString().split(',')[1]}</em>`,
+        extras: { 
+          headers: { "x-ably-directMessage": false, "x-ably-channelName": newChannelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
+        }
+      });
+    }
       newChannel.history((err, page) => {
         let messages = page.items.reverse();
         setMessagesFromDB((messagesFromDB)=>{
@@ -637,9 +665,8 @@ const AblyChatComponent = () => {
       return;
     }
 
-    const firstMessage = `A New Private Message chat with <strong>"${name}"</strong> was created <em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>`;
+    const firstMessage = `A New Direct Message with <strong>"${name}"</strong> was created <em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>`;
 
-    // console.log('Inside sendPrivateMessage name and email: ', name, email);
     setChannelName(name);
 
     saveDirectMessageToDB(name, email, image, firstMessage)
@@ -780,12 +807,13 @@ const AblyChatComponent = () => {
       <br/>
       <span className={styles.channelTitle}>MESSAGES</span>
       {Array.isArray(directMessageChannels) && directMessageChannels.length ? directMessageChannels.map((pMsg, index) => 
+        pMsg !== session.user.name ? 
         <span key={`${index}=PrivMessages`}>
           <p className={styles.channelListItems} onClick={(e) => switchChannel(e)}>
           <span className={styles.hashTag}>#</span>
             {pMsg}
           </p>
-        </span>
+        </span> : null
       ): null}
       </div>
       </div>

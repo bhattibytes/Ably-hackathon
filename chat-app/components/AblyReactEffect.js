@@ -22,7 +22,7 @@ export function useChannel(channelName, callbackOnMessage) {
   const onMount = () => {
    
     channel.subscribe(msg => { 
-      // console.log('MSG: ', msg.extras.headers['x-ably-directMessage']);
+      // console.log('MSG: ', msg);
       if (session && status === 'authenticated' && msg.connectionId === realtime.connection.id &&  msg.extras.headers['x-ably-directMessage'] === false) {
         dynamodb.putItem({
           TableName: 'ably_users',
@@ -48,7 +48,7 @@ export function useChannel(channelName, callbackOnMessage) {
         });
         // sending messages after private channel creation and sendMessageChat function
       } else if (session && status === 'authenticated' && msg.connectionId === realtime.connection.id &&  msg.extras.headers['x-ably-directMessage'] === true) {
-        console.log('MSG inside sending direct message: ', msg);
+        // console.log('MSG inside sending direct message: ', msg);
         dynamodb.updateItem({
           TableName: 'ably_direct_messages',
           Key: {
