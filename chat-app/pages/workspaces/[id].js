@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import AWS from 'aws-sdk';
 import ResponsiveAppBar from '../../components/ResponsiveAppBar';
 import { v4 as uuidv4 } from 'uuid';
-import { SpaceContextProvider } from "../../utils/SpacesContext";
+import { SpaceContextProvider, LeaveSpace } from "../../utils/SpacesContext";
 
 AWS.config.update({
   region: 'us-east-2',
