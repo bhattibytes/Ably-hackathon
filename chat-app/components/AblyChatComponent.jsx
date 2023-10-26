@@ -360,7 +360,6 @@ const AblyChatComponent = () => {
     setMessagesFromDB(async() => await queryUsersWithPartiQL());
     setPrivateChannels(async() => await queryChannelsWithPartiQL());
     setDirectMessageChannels(async() => await queryDirectMsgsWithPartiQL());
-    setDirectMessagesFromDB(async() => await queryDirectMsgsWithPartiQL());
   }, [session]);
 
   var parsedMessages = [];
@@ -462,7 +461,7 @@ const AblyChatComponent = () => {
     } else if (messageText !== '' && directMessageChannels.includes(channelName)) {
       let dmID = '';
       directMessagesFromDB.forEach((message) => {
-        if (message.memberEmails.SS.includes(session.user.email)) {
+        if (message.memberEmails.SS.includes(session.user.email) && message.memberEmails.SS.includes(message.ownerEmail.S)) {
           dmID = message.id.S;
         }
       });
@@ -474,7 +473,7 @@ const AblyChatComponent = () => {
           headers: { "x-ably-directMessage": true, "x-ably-dmID": dmID, "x-ably-channelName": channelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
         }
       }); 
-      setTimeout(() => { setDirectMessagesFromDB(queryDirectMsgsWithPartiQL()) }, 50);
+      setTimeout(() => { setDirectMessagesFromDB(queryDirectMsgsWithPartiQL()); }, 50);
       } else {
         console.log('dmID was not found');
       }
@@ -556,7 +555,7 @@ const AblyChatComponent = () => {
     }
     );
   }
-
+  
   const switchChannel = (e) => {
     e.preventDefault();
     const newChannelName = e.target.innerText.slice(2);
@@ -616,7 +615,7 @@ const AblyChatComponent = () => {
       return members.map((member, i) => {
         return (
           <div className={styles.onlineUsersList} key={`${i}=MemberList`}>
-            <img src={member.image} width={40} style={{ borderRadius: "25px", border: "1px solid white" }} onClick={createPrivateMessage} id={`${member.author}, ${member.email}`}/> 
+            <img src={member.image} width={40} style={{ borderRadius: "25px", border: "1px solid white" }} onClick={createPrivateMessage} id={`${member.author},${member.email}`}/> 
             <span className={styles.onlineName}>{member.author}
             { membersTyping.map((memberType, index) => {
               if (memberType.author === member.author && memberType.isTyping === true && messageText !== '' ) {
