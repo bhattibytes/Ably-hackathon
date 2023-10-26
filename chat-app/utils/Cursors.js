@@ -25,7 +25,6 @@ const YourCursor = ({ self, space, parentRef }) => {
 
   const { cursorColor, nameColor } = self.profileData.userColors;
   
-  console.log(self.profileData);
 
   return (
     

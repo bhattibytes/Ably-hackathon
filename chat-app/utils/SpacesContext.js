@@ -7,10 +7,22 @@ import { getSpaceNameFromUrl } from "./helper";
 
 const client = new Realtime.Promise({
     clientId: uuidv4(),
-    key: process.env.SPACES_API_KEY,
+    key: process.env.NEXT_PUBLIC_SPACES_API_KEY,
   }); 
 
 const SpacesContext = React.createContext(undefined);
+
+const LeaveSpace = async () => {
+  const spaces = new Spaces(client);
+  const url = new URL(window.location.href);
+
+  const pathSegments = url.pathname.split('/');
+  const spaceName = pathSegments[pathSegments.length - 1];
+
+
+  const space = await spaces.get(spaceName);
+  await space.leave();
+}
 
 const SpaceContextProvider = ({ example, children }) => {
   const [space, setSpace] = useState(undefined);
@@ -45,4 +57,4 @@ const SpaceContextProvider = ({ example, children }) => {
   );
 };
 
-export { SpaceContextProvider, SpacesContext };
+export { SpaceContextProvider, SpacesContext, LeaveSpace };
