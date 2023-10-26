@@ -9,6 +9,10 @@ import { colours } from "../utils/helper";
 import useSpaceMembers from "../utils/useMembers";
 import { MemberCursors, YourCursor } from "../utils/Cursors";
 import { SpacesContext } from "../utils/SpacesContext";
+import { LockFilledSvg } from "../utils/lockFilledSVG";
+import { useSession } from 'next-auth/react';
+import { useOnClickOutside } from "usehooks-ts";
+ 
 
 
 AWS.config.update({
@@ -86,8 +90,12 @@ export default function Kanban({ id, s, h, ic }) {
   const [headers, setHeaders] = useState([]);
   const [task , setTask] = useState('');
   const [itemCount, setItemCount] = useState(null);
-
+  const refLock = useRef(null);
+  const [lockedIdByYou, setLockedIdByYou] = useState(null);
+  const [myLock, setMyLock] = useState([]);
+  const [otherLocks, setOthersLocks] = useState([]);
   const name = useMemo(mockName, []);
+  const { data: session, status } = useSession();
   /** 💡 Select a color to assign randomly to a new user that enters the space💡 */
   const userColors = useMemo(
     () => colours[Math.floor(Math.random() * colours.length)],
@@ -98,12 +106,50 @@ export default function Kanban({ id, s, h, ic }) {
   const space = useContext(SpacesContext);
 
   useEffect(() => {
+    const name = session?.user.name;
     space?.enter({ name, userColors });
+
+    const my = space?.locks.getSelf();
+      my.then((array) => {
+        setMyLock(array)
+      });
+      const others = space?.locks.getOthers();
+      others.then((array) => {
+        setOthersLocks(array);
+      });   
+
   }, [space]);
+
+  useEffect(() => {
+    if (!space) return;
+
+    const handler = () => {
+      const my = space?.locks.getSelf();
+      my.then((array) => {
+        setMyLock(array)
+      });
+      const others = space?.locks.getOthers();
+      others.then((array) => {
+        setOthersLocks(array);
+      });   
+    };
+
+    // Listen to all lock events
+    space.locks.subscribe("update", handler);
+    
+    return () => {
+      // Remove listener on unmount
+      space?.locks.unsubscribe("update", handler);
+    };
+  }, [space]);
+
 
   const { self, otherMembers } = useSpaceMembers(space);
 
+
   const liveCursors = useRef(null);
+
+
   
   useEffect(() => {
       updateItemToDynamoDB(id);
@@ -237,7 +283,43 @@ export default function Kanban({ id, s, h, ic }) {
   }
   }
 
+  const handleClickOutside = (e) => {
+
+  
+    if (lockedIdByYou){
+      space?.locks.release(lockedIdByYou);
+      console.log("released lock by id",lockedIdByYou);
+      setLockedIdByYou(null);
+      const closeInputs = document.querySelectorAll("input[id$=input]");
+    closeInputs.forEach((input) => {
+      if (input.style.display === "") {
+        input.style.display = "none";
+      }
+    });
+    }
+  };
+
+  // useOnClickOutside(refLock, handleClickOutside);
+
   const handleClickEditTaskTitle = (e) => {
+    try {
+      // Check if you have already acquired a lock for the item
+      if (lockedIdByYou) {
+        // If so, release the existing lock
+        space?.locks.release(lockedIdByYou);
+        console.log("Released lock by id", lockedIdByYou);
+        setLockedIdByYou(null);
+      }
+  
+      // Now, acquire the lock for the new item
+      space.locks.acquire(e.target.id);
+      setLockedIdByYou(e.target.id);
+      console.log("Acquired lock by id", e.target.id);
+    } catch (error) {
+      console.error("Failed to acquire or release the lock:", error);
+      // Handle the error, e.g., displaying an error message to the user.
+    }
+
     const closeInputs = document.querySelectorAll("input[id$=input]");
     closeInputs.forEach((input) => {
       if (input.style.display === "") {
@@ -266,6 +348,11 @@ export default function Kanban({ id, s, h, ic }) {
       setState(newState);
       taskElement.innerHTML = task;
       setTask("");
+      if (lockedIdByYou){
+        space?.locks.release(lockedIdByYou);
+        console.log("released lock by id",lockedIdByYou);
+        setLockedIdByYou(null);
+      }
       input.style.display = "none";
     }
   };
@@ -294,6 +381,11 @@ export default function Kanban({ id, s, h, ic }) {
       }
   
       taskElement.innerHTML = newTaskTitle;
+      if (lockedIdByYou){
+        space?.locks.release(lockedIdByYou);
+        console.log("released lock by id",lockedIdByYou);
+        setLockedIdByYou(null);
+      }
       taskInput.value = ""; 
       setTask("");
     }
@@ -399,76 +491,153 @@ export default function Kanban({ id, s, h, ic }) {
                     style={{ display: 'none'}}
                     value={headerValue} 
                   />
-                    {el.map((item, index) => (
-                      <Draggable
-                        key={item.id}
-                        draggableId={item.id}
-                        index={index}
-                      >
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            style={getItemStyle(
-                              snapshot.isDragging,
-                              provided.draggableProps.style
-                            )}
-                          >
-                            <div
-                            className={styles.taskCard}
-                            >
-                              <span className={styles.taskTitle} id={`${item.id}=task`}>{item.content}</span>
-                              <button
-                                type="button"
-                                className={styles.taskButton}
-                                onClick={(e) => {handleClickEditTaskTitle(e)}}
-                                id={item.id}
-                              >
-                                edit | save
-                              </button>
-                              <button
-                                className={styles.taskButtonDelete}
-                                type="button"
-                                onClick={() => {
-                                  var txt = "Are you sure you want to delete this task?";
-                                  if (confirm(txt)) {
-                                    console.log("delete");
-                                  } else {
-                                    return;
+                   {el.map((item, index) => {
+                        let borderColor;
+                        let memberName1;
+
+                        const matchingLock = Array.isArray(otherLocks) ? otherLocks.find(lock => lock.id === item.id) : null;
+                        const isLocked = !!matchingLock;
+
+
+                        if (lockedIdByYou === item.id) {
+                          borderColor = userColors.cursorColor;
+                        }
+
+                        if (matchingLock) {
+                          borderColor = matchingLock.member.profileData.userColors.cursorColor;
+                          console.log("other border color", borderColor);
+                          memberName1 = matchingLock.member.profileData.name;
+                        }
+
+                        return (
+                          <div>
+                            <Draggable key={item.id} draggableId={item.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div className={`relative border-2 rounded-lg`} style={{ borderColor: borderColor }}>
+                                  {matchingLock ? (
+                                    <div
+                                      className=""
+                                      style={{
+                                        position: "absolute",
+                                        top: "-24px",
+                                        right: "6px",
+                                        width: "auto",
+                                        height: "24px",
+                                        padding: "6px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        fontSize: "0.625rem",
+                                        backgroundColor: borderColor,
+                                        color: "white",
+                                        borderRadius: "4px 4px 0px 0px",
+                                        zIndex: 1,
+                                        gap: "4px",
+                                      }}
+                                    >
+                                      {memberName1}
+                                      <LockFilledSvg className="text-base" />
+                                    </div>
+                                  ) : lockedIdByYou === item.id ? (
+                                    <div
+                                      className=""
+                                      style={{
+                                        position: "absolute",
+                                        top: "-24px",
+                                        right: "6px",
+                                        width: "auto",
+                                        height: "24px",
+                                        padding: "6px",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        fontSize: "0.625rem",
+                                        backgroundColor: userColors.cursorColor,
+                                        color: "white",
+                                        borderRadius: "4px 4px 0px 0px",
+                                        zIndex: 1,
+                                        gap: "4px",
+                                      }}
+                                    >
+                                      You
+                                      <LockFilledSvg className="text-base" />
+                                    </div>
+                                  ) : null
                                   }
-                                  const newState = [...state];
-                                  newState[ind].splice(index, 1);
-                                  setState(
-                                    newState.filter(group => {
-                                      if (group.length === 0) {
-                                        const newHeaders = [...headers];
-                                        newHeaders.splice(ind, 1);
-                                        setHeaders(newHeaders);
-                                      }
-                                      return group.length
-                                    })
-                                  );
-                                }}
-                              >
-                                delete
-                              </button>
-                              <input type="text" 
-                                id={`${item.id}=input`} 
-                                key={ind} 
-                                style={{ display: 'none' }}
-                                placeholder={`Edit task title ${item.id.split('-')[1]}`}
-                                className={styles.taskInput} 
-                                onKeyDown={(e)=> handleKeyDownEditTaskTitle(e)}
-                                value={task}
-                                onChange={(e) => { setTask(e.target.value) }}
-                              />
-                              <span className={styles.id}>id: {item.id.split('-')[1]}</span>
-                            </div>
+
+                                  {isLocked && ( // Add an overlay for locked divs
+                                    <div
+                                      style={{
+                                        position: "absolute",
+                                        top: 0,
+                                        left: 0,
+                                        width: "100%",
+                                        height: "100%",
+                                        zIndex: 2,
+                                        background: "rgba(255, 255, 255, 0.1)", // Transparent overlay
+                                      }}
+                                    ></div>
+                                  )}
+
+                                  <div
+                                    ref={provided.innerRef}
+                                    {...provided.draggableProps}
+                                    {...provided.dragHandleProps}
+                                    style={getItemStyle(snapshot.isDragging, provided.draggableProps.style)}
+                                  >
+                                    <div className={styles.taskCard}>
+                                      <span className={styles.taskTitle} id={`${item.id}=task`}>{item.content}</span>
+                                      <button
+                                        type="button"
+                                        className={styles.taskButton}
+                                        onClick={(e) => { handleClickEditTaskTitle(e) }}
+                                        id={item.id}
+                                      >
+                                        edit | save
+                                      </button>
+                                      <button className={styles.taskButtonDelete} type="button" onClick={() => {
+                                        var txt = "Are you sure you want to delete this task?";
+                                        if (confirm(txt)) {
+                                          console.log("delete");
+                                        } else {
+                                          return;
+                                        }
+                                        const newState = [...state];
+                                        newState[ind].splice(index, 1);
+                                        setState(
+                                          newState.filter(group => {
+                                            if (group.length === 0) {
+                                              const newHeaders = [...headers];
+                                              newHeaders.splice(ind, 1);
+                                              setHeaders(newHeaders);
+                                            }
+                                            return group.length;
+                                          })
+                                        );
+                                      }}>
+                                        delete
+                                      </button>
+                                      <input
+                                        type="text"
+                                        id={`${item.id}=input`}
+                                        key={ind}
+                                        style={{ display: 'none' }}
+                                        placeholder={`Edit task title ${item.id.split('-')[1]}`}
+                                        className={styles.taskInput}
+                                        onKeyDown={(e) => handleKeyDownEditTaskTitle(e)}
+                                        value={task}
+                                        onChange={(e) => { setTask(e.target.value) }}
+                                      />
+                                      <span className={styles.id}>id: {item.id.split('-')[1]}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
                           </div>
-                        )}
-                      </Draggable>
-                    ))}
+                        );
+                      })}
+
                     {provided.placeholder}
                   </div>
                 )}
@@ -485,34 +654,3 @@ export default function Kanban({ id, s, h, ic }) {
 
 
 
-
-  //  const insertItemToDynamoDB = async () => {
-  //   try {
-  //     const params = {
-  //       TableName: 'ably_kanban',
-  //       Item: {
-  //         'id': { S: uuidv4() },
-  //         'state': { SS: JSON.stringify(state) }, 
-  //         'headers': { SS: JSON.stringify(headers) }, 
-  //         'itemCount': { N: itemCount.toString() },
-  //         'channelOwner': {S: session.user.email},
-  //         'ownerName': { S: session.user.name },
-  //         'channelName': { S: channelName },
-  //         'timestamp': { S: new Date().toISOString() },
-  //         'connectionId': { S: realtime.connection.id },
-  //         'channelMembers': { SS: [session.user.name] },
-  //         'channelMembersImg': { SS: [session.user.image] },
-  //       },
-  //     };
-  
-  //     dynamodb.putItem(params, function(err, data) {
-  //       if (err) {
-  //         console.error('Error inserting item into DynamoDB:', err);
-  //       } else {
-  //         console.log('Item inserted into DynamoDB:', params.Item);
-  //       }
-  //     });
-  //   } catch (error) {
-  //     console.error('Error preparing item for DynamoDB:', error);
-  //   }
-  // };

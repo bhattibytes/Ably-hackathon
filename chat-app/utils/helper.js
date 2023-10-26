@@ -16,6 +16,10 @@ export const colours = [
 ];
 
 export const getSpaceNameFromUrl = () => {
-    const spaceName = "kanban-board";
+  const url = new URL(window.location.href);
+
+  const pathSegments = url.pathname.split('/');
+  const spaceName = pathSegments[pathSegments.length - 1];
+
   return spaceName;
 };
