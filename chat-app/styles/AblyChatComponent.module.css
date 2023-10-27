@@ -62,6 +62,31 @@
   padding: 5.5px;
 }
 
+.reply {
+  color: white;
+  font-size: 22px;
+  border: 2px solid black;
+  border-radius: 10px;
+  background-color: #6e07f3;
+  padding-left: 10px;
+  padding-right: 10px;
+  width: 580px;
+  text-align: center;
+}
+
+.replyBtn {
+  cursor: pointer;
+  background-color: #6e07f3;
+  color: black;
+  border-radius: 5px;
+  padding: 5.5px;
+}
+
+.replyAuthor {
+  color: white;
+  font-size: 18px;
+}
+
 .overlay {
   position: fixed; /* Sit on top of the page content */
   display: none; /* Hidden by default */

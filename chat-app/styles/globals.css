@@ -27,6 +27,27 @@
   gap: 4px;
 }
 
+.replyMsg {
+  border: 2px solid black;
+  border-radius: 10px;
+  background-color: white;
+  padding: 5px 10px;
+  color: black;
+  font-size: 14px;
+}
+
+.replyMsgPara {
+  font-size: 14px;
+}
+
+.replyIcon {
+  font-size: 20px;
+  margin-top: 50px;
+  margin-right: 5px;
+  padding: 3px;
+  background-color: #5BE9B9;
+  border-radius: 5px;
+}
 
 .moving{
   position: absolute;

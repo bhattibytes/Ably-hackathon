@@ -18,13 +18,16 @@ const AblyChatComponent = () => {
   const [privateChannels, setPrivateChannels] = useState([]);
   const [allPrivateChannelInfo, setallPrivateChannelInfo] = useState([{}]);
   const [directMessageChannels, setDirectMessageChannels] = useState([]);
-  const [directMessagesFromDB, setDirectMessagesFromDB] = useState([]);
+  const [directMessagesInfoFromDB, setDirectMessagesInfoFromDB] = useState([]);
   const { data: session, status } = useSession();
   const [messagesFromDB, setMessagesFromDB] = useState([]);
   const [members, setMembers] = useState([]);
   const [registeredUsers, setRegisteredUsers] = useState([]); 
   const [regNames, setRegNames] = useState([]);
   const [membersTyping, setMembersTyping] = useState([]);
+  const [tempMessages, setTempMessages] = useState([]);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [replyToAuthor, setReplyToAuthor] = useState('');
 
   async function queryUsersWithPartiQL() {
     const statement = 'SELECT * FROM "ably_users"';
@@ -54,7 +57,7 @@ const AblyChatComponent = () => {
           }
         });
         setDirectMessageChannels([...membersFromDB]);
-        setDirectMessagesFromDB(data.Items);
+        setDirectMessagesInfoFromDB(data.Items);
       }
     }).catch((error) => {
       console.log('error: ', error);  
@@ -99,12 +102,12 @@ const AblyChatComponent = () => {
 
   const [channel, realtime] = useChannel(channelName, async (message) => {
     let messagesFromDBCall = [];
-    let directMessagesFromDBCall = [];
+    let directMessagesInfoFromDBCall = [];
     setTimeout(async() => { messagesFromDBCall = await queryUsersWithPartiQL(); }, 10);
-    setTimeout(async() => { directMessagesFromDBCall = await queryDirectMsgsWithPartiQL(); }, 50);
+    setTimeout(async() => { directMessagesInfoFromDBCall = await queryDirectMsgsWithPartiQL(); }, 10);
     return new Promise((resolve, reject) => {
       resolve(messagesFromDBCall);
-      resolve(directMessagesFromDBCall);
+      resolve(directMessagesInfoFromDBCall);
     }).catch((error) => {
       console.log('error: ', error);  
       reject(error);
@@ -116,11 +119,11 @@ const AblyChatComponent = () => {
             return [...messagesFromDBCall]
           }
         });
-        setDirectMessagesFromDB((directMessagesFromDB)=> { 
-          if (Array.isArray(directMessagesFromDB)) {
-            return [...directMessagesFromDB, ...directMessagesFromDBCall]
+        setDirectMessagesInfoFromDB((directMessagesInfoFromDB)=> { 
+          if (Array.isArray(directMessagesInfoFromDB)) {
+            return [...directMessagesInfoFromDB, ...directMessagesInfoFromDBCall]
           } else {
-            return [...directMessagesFromDBCall]
+            return [...directMessagesInfoFromDBCall]
           }
         });
       });
@@ -164,7 +167,7 @@ const AblyChatComponent = () => {
   }
 
   const saveDirectMessageToDB = async (name, email, image, msg) => {
-    Array.isArray(directMessagesFromDB) && directMessagesFromDB.forEach((message) => {
+    Array.isArray(directMessagesInfoFromDB) && directMessagesInfoFromDB.forEach((message) => {
       if (message.memberEmails.SS.includes(email)) {
         dynamodb.updateItem({
           TableName: 'ably_direct_messages',
@@ -362,8 +365,21 @@ const AblyChatComponent = () => {
     setDirectMessageChannels(async() => await queryDirectMsgsWithPartiQL());
   }, [session]);
 
+  const handleReply = (e) => {
+    let author = e.target.parentElement.children[1].children[0].innerText;
+    let message = e.target.parentElement.children[1].children[1].innerText;
+
+    setReplyMessage(message);
+    setReplyToAuthor(author);
+    overlay2.style.display = 'flex';
+  }
+
+  const handleReplyClose = (e) => {
+    overlay2.style.display = 'none';
+  }
+
   var parsedMessages = [];
-  if (Array.isArray(messagesFromDB) && Array.isArray(directMessagesFromDB) && Array.isArray(privateChannels)) {
+  if (Array.isArray(messagesFromDB) && Array.isArray(directMessagesInfoFromDB) && Array.isArray(privateChannels)) {
     if ((channels.includes(channelName) || privateChannels.includes(channelName)) && messagesFromDB?.length && session && status === 'authenticated') {
         var sorted = messagesFromDB.sort((a, b) => new Date(a.timestamp.S).getTime() - new Date(b.timestamp.S).getTime() );
         sorted = sorted.filter((message) => message.channel ? message.channel.S === channelName : null );
@@ -389,6 +405,7 @@ const AblyChatComponent = () => {
                 </>
                 :
                 <>
+                  <span onClick={(e)=>handleReply(e)} className={styles.replyBtn}>↪️</span>
                   <span className={styles.message} data-author={author}> 
                     <span id="other" className={styles.author}>{author}<br/></span>
                     <span className={styles.parsedMsg}>{parsedMessage}</span>
@@ -399,8 +416,8 @@ const AblyChatComponent = () => {
             </span>
             )
         });
-    } else if ((!channels.includes(channelName) && !privateChannels.includes(channelName)) && directMessagesFromDB?.length && session && status === 'authenticated') {
-      var sorted = directMessagesFromDB.filter((message) => message.memberEmails.SS.includes(session.user.email));
+    } else if ((!channels.includes(channelName) && !privateChannels.includes(channelName)) && directMessagesInfoFromDB?.length && session && status === 'authenticated') {
+      var sorted = directMessagesInfoFromDB.filter((message) => message.memberEmails.SS.includes(session.user.email));
 
       parsedMessages = sorted.map((message, index) => {
         let parsedMessage;
@@ -440,16 +457,17 @@ const AblyChatComponent = () => {
           )
         }
         return allMessages;
-    });
-    
-  }
+      });
+    }
   }
 
   const form = document.querySelector('form#chat-form');
+  const form2 = document.querySelector('form#chat-form2');
   const overlay = document.querySelector('div#overlay');
+  const overlay2 = document.querySelector('div#overlay2');
 
-  const sendChatMessage = async (messageText) => {
-    if (messageText !== '' && !directMessageChannels.includes(channelName)) {
+  const sendChatMessage = async (messageText, replyMessage="") => {
+    if (messageText !== '' && !directMessageChannels.includes(channelName) && replyMessage === '') {
       await channel.publish({ 
         name: channelName, 
         data: `<strong>${messageText.slice(3, -4) + '</strong>' + '<em id="date">at '+ new Date().toLocaleString().split(',')[1]}</em>`,
@@ -458,9 +476,21 @@ const AblyChatComponent = () => {
         }
       });
       setTimeout(() => { setMessagesFromDB(queryUsersWithPartiQL()); }, 50);
-    } else if (messageText !== '' && directMessageChannels.includes(channelName)) {
+      setMessageText("");
+    } else if (messageText !== '' && !directMessageChannels.includes(channelName) && replyMessage !== '') {
+      await channel.publish({ 
+        name: channelName, 
+        data: `<p className="replyMsgPara"><span className="replyIcon">⬇️</span>Replying to message: <em className="replyMsg">"${replyMessage}"</em> from ${replyToAuthor}</p><strong>${messageText.slice(3, -4) + '</strong>' + '<em id="date">at '+ new Date().toLocaleString().split(',')[1]}</em>`,
+        extras: { 
+          headers: { "x-ably-directMessage": false, "x-ably-channelName": channelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
+        }
+      });
+      setTimeout(() => { setMessagesFromDB(queryUsersWithPartiQL()); }, 50);
+      setMessageText("");
+    }
+    if (messageText !== '' && directMessageChannels.includes(channelName)) {
       let dmID = '';
-      directMessagesFromDB.forEach((message) => {
+      directMessagesInfoFromDB.forEach((message) => {
         if (message.memberEmails.SS.includes(session.user.email) && message.memberEmails.SS.includes(message.ownerEmail.S)) {
           dmID = message.id.S;
         }
@@ -473,20 +503,38 @@ const AblyChatComponent = () => {
           headers: { "x-ably-directMessage": true, "x-ably-dmID": dmID, "x-ably-channelName": channelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
         }
       }); 
-      setTimeout(() => { setDirectMessagesFromDB(queryDirectMsgsWithPartiQL()); }, 50);
+      setTimeout(() => { setMessagesFromDB(queryUsersWithPartiQL()); }, 50);
+      
+      realtime.channels.get(channelName).history((err, page) => {
+        let messages = page.items.reverse();
+
+        setTempMessages([...messages]);
+        setDirectMessagesInfoFromDB((directMessagesInfoFromDB)=> { 
+          if (Array.isArray(directMessagesInfoFromDB)) {
+            [...directMessagesInfoFromDB]
+          }
+        });
+      });
+      setTimeout(() => { setDirectMessagesInfoFromDB(queryDirectMsgsWithPartiQL()); }, 50);
       } else {
         console.log('dmID was not found');
       }
-    }
+    } 
   }
   
   const handleFormSubmission = (event) => {
     event.preventDefault();
     if (messageText === '') {
       alert("Please enter a message")
-    } else { 
+    } else if (replyMessage === '' ) { 
       sendChatMessage(messageText);
       form.reset();
+    } else {
+      sendChatMessage(messageText, replyMessage);
+      form2.reset();
+      setReplyMessage('');
+      setReplyToAuthor('');
+      overlay2.style.display = 'none';
     }
   }
 
@@ -567,11 +615,11 @@ const AblyChatComponent = () => {
       alert("You are already in this channel")
       return;
     } else {
-    const newChannel = realtime.channels.get(newChannelName);
-    newChannel.attach();
+      const newChannel = realtime.channels.get(newChannelName);
+      newChannel.attach();
     if (directMessageChannels.includes(newChannelName)) {
       let dmID = '';
-      directMessagesFromDB.forEach((message) => {
+      directMessagesInfoFromDB.forEach((message) => {
         if (message.memberEmails.SS.includes(session.user.email)) {
           dmID = message.id.S;
         }
@@ -582,6 +630,14 @@ const AblyChatComponent = () => {
         extras: { 
           headers: { "x-ably-directMessage": true, "x-ably-dmID": dmID, "x-ably-channelName": newChannelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
         }
+      });
+      newChannel.history((err, page) => {
+        let messages = page.items.reverse();
+        setMessagesFromDB((messagesFromDB)=>{
+          if (Array.isArray(messagesFromDB)) {
+            return [...messagesFromDB, ...messages]
+          }
+        });
       });
     } else {
       newChannel.publish({ 
@@ -736,13 +792,68 @@ const AblyChatComponent = () => {
     messageEnd.scrollIntoView({ behaviour: "smooth" });
   });
 
+  useEffect(() => {
+    setTimeout(() => { setDirectMessagesInfoFromDB(queryDirectMsgsWithPartiQL()); }, 50);
+  }, [tempMessages.length]);
+
   return (
     // console.log('directMessageChannels: ', directMessageChannels),
-    // console.log('DiectMessages: ', directMessagesFromDB),
-    // console.log('saveDirectMessageToDB: ', directMessagesFromDB),
+    // console.log('DiectMessages: ', directMessagesInfoFromDB),
+    // console.log('saveDirectMessageToDB: ', directMessagesInfoFromDB),
     // console.log('privateChannels: ', privateChannels),
+    // console.log('temp: ', tempMessages),
     <>
       <div className={styles.mainContainer}>
+      <div id="overlay2" className={styles.overlay}>
+      <p className={styles.replyAuthor}>Reply to message from: {replyToAuthor}</p>
+      <div className={styles.reply}>{replyMessage}</div>
+        <div className={styles.editor2}>
+          <form
+            id="chat-form2" 
+            onSubmit={handleFormSubmission} 
+            className={styles.form}
+            >
+            <Editor
+                    apiKey={process.env.TINY_MCE_API_KEY}
+                    onKeyDown={(e) => {
+                      if (e.key == "Enter") {
+                        e.preventDefault();
+                        sendChatMessage(messageText, replyMessage);
+                        overlay2.style.display = 'none';
+                        form2.reset();
+                      }
+                    }}
+                    init={{
+                      height: 200,
+                      placeholder: "Type reply here...",
+                      menubar: false,
+                      resize: false,
+                      plugins: [
+                        'emoticons',
+                        'insertdatetime',
+                        'link',
+                        'lists',
+                        'table',
+                        'image',
+                        'code'
+                      ],
+                      toolbar:
+                        'undo redo | formatselect | bold italic backcolor | \
+                        emoticons | link | code |  removeformat \ '
+                    }}
+                    onEditorChange={(content, editor) => {
+                      return (
+                      getPresenceTyping(content),
+                      typingIndicator(content),
+                      setMessageText(content)
+                      )
+                    }}
+                  />
+                  <button type="submit" className={styles.button}>Send</button>
+            </form>
+        </div>  
+      <div>
+      </div><button onClick={handleReplyClose} style={{ color: "white"}}>X CLOSE</button></div>
         <div className={styles.chatUserContainer}>
           <p className={styles.chatTitle}>DM Online Members</p>
           <div className={styles.chatUser}>{ getUniqueMembers(1) }</div>
