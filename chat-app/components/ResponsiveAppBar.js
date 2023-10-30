@@ -78,6 +78,7 @@ const ResponsiveAppBar = () => {
     className={styles.AppBar}
     sx={{ borderBottom: "1px solid white", height: "70px" }}
     >
+      <img src="https://images2.imgbox.com/51/4e/YIgLLSSc_o.png" alt="logo" className={styles.trackchat} />
       <Container maxWidth="l">
         <Toolbar disableGutters>
           <Typography
