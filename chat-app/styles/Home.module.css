@@ -180,3 +180,9 @@
   z-index: -1;
   bottom: 0;
 }
+
+@media screen and (max-width: 899px) {
+  .trackchat {
+    right: 0px;
+  }
+}

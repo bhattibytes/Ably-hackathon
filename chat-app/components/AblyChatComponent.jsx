@@ -492,6 +492,7 @@ const AblyChatComponent = () => {
   const form2 = document.querySelector('form#chat-form2');
   const overlay = document.querySelector('div#overlay');
   const overlay2 = document.querySelector('div#overlay2');
+  const overlay3 = document.querySelector('div#overlay3');
 
   const sendChatMessage = async (messageText, replyMessage="") => {
     if (messageText !== '' && !directMessageChannels.includes(channelName) && replyMessage === '') {
@@ -733,10 +734,32 @@ const AblyChatComponent = () => {
 
     if (code === 3) {
       return allPrivateChannelInfo.filter((member, i) => { 
-      if (member.channelName?.S === channelName && member.channelMembersImg?.SS) {
-        return (member);
-      }
-    })
+        if (member.channelName?.S === channelName && member.channelMembersImg?.SS) {
+          return (member);
+        }
+      })
+    }
+
+    if (code === 4) {
+      return registeredUsers.map((member, i) => {
+        return (
+          <div className={styles.DMmemberList} key={`${i}=DM-MemberList`}>
+            <img src={member.image.S} width={70} style={{ borderRadius: "50px", border: "1px solid white" }} onClick={createPrivateMessage} id={`${member.name.S},${member.email.S}`}/> 
+            <span className={styles.onlineName}>{member.name.S}
+            { membersTyping.map((memberType, index) => {
+              if (memberType.author === member.author && memberType.isTyping === true && messageText !== '' ) {
+              return (
+                <img key={index} className={styles.typing} id="typing-indicator" src="https://www.slicktext.com/images/common/typing-indicator-loader.gif"/>
+              )
+            } else {
+              return null;
+            }
+            })}
+            </span>
+          </div>
+        )
+      })
+
     }
   }
 
@@ -784,6 +807,10 @@ const AblyChatComponent = () => {
 
   const handleOpenOverlay = () => {
     overlay.style.display = "flex";
+  }
+
+  const handleOpenOverlay3 = () => {
+    overlay3.style.display = "flex";
   }
 
   const handleClose = () => {
@@ -884,7 +911,7 @@ const AblyChatComponent = () => {
       <div>
       </div><button onClick={handleReplyClose} style={{ color: "white"}}>X CLOSE</button></div>
         <div className={styles.chatUserContainer}>
-          <p className={styles.chatTitle}>DM Online Members</p>
+          <p className={styles.chatTitle}>Members Online</p>
           <div className={styles.chatUser}>{ getUniqueMembers(1) }</div>
         </div>
       <div className={styles.privateChannelsUserListContainer}>  
@@ -900,7 +927,7 @@ const AblyChatComponent = () => {
         <h1 className={styles.channelHeading}>"{channelName}"{Array.isArray(privateChannels) && privateChannels.includes(channelName) ? <span className={styles.plusBtn} onClick={handleOpenOverlay}>👤+</span> 
         : null}
         </h1>
-        <div id="overlay" className={styles.overlay}><div>{getUniqueMembers(2)}</div><button onClick={handleClose}>X</button></div>
+        <div id="overlay" className={styles.overlay}><div className={styles.inviteMemberContainer}>{getUniqueMembers(2)}</div><button onClick={handleClose} style={{ fontSize: '28px', color: 'white'}}>X</button></div>
       <div className={styles.channelsContainer}>
       <div className={styles.channels}>
       <span className={styles.channelTitle}>PUBLIC</span>
@@ -944,7 +971,8 @@ const AblyChatComponent = () => {
       </span>
       ): <span></span>}
       <br/>
-      <span className={styles.channelTitle}>MESSAGES</span>
+      <span className={styles.channelTitle}>MESSAGES</span>&nbsp;&nbsp;<span className={styles.plusBtn} onClick={handleOpenOverlay3}>👤+</span> <div id="overlay3" className={styles.overlay}><span>Click to DM Member</span><div className={styles.DMcontainer}>
+      { getUniqueMembers(4) }</div> <div onClick={() => overlay3.style.display = 'none'} style={{ fontSize: '28px'}}>X</div></div>
       {Array.isArray(directMessageChannels) && directMessageChannels.length ? directMessageChannels.map((pMsg, index) => 
         pMsg !== session.user.name ? 
         <span key={`${index}=PrivMessages`}>
