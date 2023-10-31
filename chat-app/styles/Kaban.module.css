@@ -7,6 +7,8 @@
  
 }
 
+
+
 .homeLink {
   color: white;
 }
@@ -20,28 +22,31 @@
 
 .kanbanBoard {
   display: flex; 
-  border: 5px solid #defaf1;
   border-radius: 10px;
   margin-top: 2px;
   background-color: #defaf1;
-  box-shadow: 8px 5px 5px 1px #5BE9B9;
+  padding: 10px 60px;
+  width: 100%;
+  
 }
 
 .inputNewGroup {
   line-height: 1.5;
-  border-radius: 5px;
+  border-radius: 10px;
   margin-bottom: 2px;
-  padding:2px 4px;
+  padding:4px 4px;
   border: 1px solid #6e07f3;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
 } 
 
 .button {
-  border-radius: 5px;
+  border-radius: 10px;
   color: white;
-  padding:6px 4px;
+  padding:4px 8px;
   font-size: 1.1em;
   background: linear-gradient(to right, #6e07f3, #5BE9B9);
-  margin-left: 5px;
+  margin-left: 10px;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
 }
 
 .button:hover {
@@ -59,13 +64,11 @@
 
 .columnHeader {
   font-weight: bold;
-  text-decoration: underline;
-  border: 2px solid #eee;
+  font-size: 1rem;
   margin-left: 150px;
   border-radius: 5px;
-  padding-left: 10px;
+  padding: 4px 20px;
   margin-bottom: 30px;
-  padding-right: 10px;
   line-height: 2;
   color: white;
   background: linear-gradient(90deg,  #aa53f2 0%, 62%, #7061f1 100%);
@@ -73,25 +76,37 @@
 
 .columnHeaderInput {
   position: absolute;
-  height: 20px;
-  top: 75px
+  top: 105px;
+  left: 250px;
+  font-size: 1.4rem;
+  line-height: 1.5;
+  border-radius: 6px;
+  margin-bottom: 2px;
+  padding:3px 14px;
+  border: 1px solid #6e07f3;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
 }
 
 .taskCard {
   display: flex;
   flex-direction: column;
   border-radius: 5px;
+  margin: 0;
   line-height: 1.5;
   color: white;
+  padding: 8px 4px;
 }
 
 .taskTitle {
   margin-top: 0;
-  margin-bottom: 0;
+  margin-bottom: 4px;
+  font-size: 1.4rem;
+  font-weight: 400;
 }
 
 .taskInput {
-  height: 20px; 
+  height: 23px;
+  padding-left: 2px; 
   width: 90%;
   position: relative;
   bottom: 90px;
@@ -99,30 +114,41 @@
 }
 
 .taskButton {
-  width: 80px;
+  width: 86px;
   font-weight: bold;
-  font-size: 12px;
+  font-size: 14px;
+  padding-bottom: 4px;
   align-self: center;
-  height: 30px;
+  height: 34px;
   border-radius: 5px;
   color: black;
   background-color: white;
-  margin-bottom: 1px;
-  box-shadow: inset 0 0 5px;
+  margin-bottom: 4px;
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+}
+.taskButton:hover {
+  font-size: 15px;
 }
 
 .taskButtonDelete {
-  width: 80px;
+  width: 84px;
+  font-size: 14px;
   align-self: center;
-  height: 30px;
+  height: 34px;
   border-radius: 5px;
+  padding-bottom: 4px;
   background-color: rgb(197, 0, 0);
   color: white;
   box-shadow: inset 0 0 30px #9f0707; 
+  box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+}
+.taskButtonDelete:hover {
+  font-size: 15px;
 }
 
 .id {
   text-align: right;
+  color:#e1e1e1;
 }
 
 @media screen and (max-width: 1700px) {
