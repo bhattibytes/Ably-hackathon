@@ -417,7 +417,11 @@ const AblyChatComponent = () => {
             )
         });
     } else if ((!channels.includes(channelName) && !privateChannels.includes(channelName)) && directMessagesInfoFromDB?.length && session && status === 'authenticated') {
-      var sorted = directMessagesInfoFromDB.filter((message) => message.memberEmails.SS.includes(session.user.email));
+      
+      var sorted = directMessagesInfoFromDB.filter((message) => {
+        if (message.memberEmails.SS.includes(session.user.email) && message.memberEmails.SS.includes(message.ownerEmail.S) && message.memberNames.SS.includes(channelName)) {
+        return message
+      }});
 
       parsedMessages = sorted.map((message, index) => {
         let parsedMessage;
@@ -491,16 +495,18 @@ const AblyChatComponent = () => {
     if (messageText !== '' && directMessageChannels.includes(channelName)) {
       let dmID = '';
       directMessagesInfoFromDB.forEach((message) => {
-        if (message.memberEmails.SS.includes(session.user.email) && message.memberEmails.SS.includes(message.ownerEmail.S)) {
+        if (message.memberEmails.SS.includes(session.user.email) && message.memberEmails.SS.includes(message.ownerEmail.S) && message.memberNames.SS.includes(channelName)) {
           dmID = message.id.S;
         }
       });
       if (dmID !== '') {
+      let passedDM = dmID;
+      dmID = '';
       await channel.publish({ 
         name: channelName, 
         data: `<strong>${messageText.slice(3, -4) + '</strong>' + '<em id="date">at '+ new Date().toLocaleString().split(',')[1]}</em>`,
         extras: { 
-          headers: { "x-ably-directMessage": true, "x-ably-dmID": dmID, "x-ably-channelName": channelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
+          headers: { "x-ably-directMessage": true, "x-ably-dmID": passedDM, "x-ably-channelName": channelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
         }
       }); 
       setTimeout(() => { setMessagesFromDB(queryUsersWithPartiQL()); }, 50);
@@ -612,7 +618,9 @@ const AblyChatComponent = () => {
     }
     setChannelName(newChannelName);
     if (newChannelName === channelName) {
-      alert("You are already in this channel")
+      // quick update from db for new messages
+      queryDirectMsgsWithPartiQL();
+      // alert("You are already in this channel")
       return;
     } else {
       const newChannel = realtime.channels.get(newChannelName);
@@ -620,25 +628,27 @@ const AblyChatComponent = () => {
     if (directMessageChannels.includes(newChannelName)) {
       let dmID = '';
       directMessagesInfoFromDB.forEach((message) => {
-        if (message.memberEmails.SS.includes(session.user.email)) {
+        if (message.memberEmails.SS.includes(session.user.email) && message.memberEmails.SS.includes(message.ownerEmail.S) && message.memberNames.SS.includes(newChannelName)) {
           dmID = message.id.S;
         }
       });
-      newChannel.publish({ 
-        name: newChannelName, 
-        data: `Switched to direct message with: <strong>"${newChannelName}"</strong> and <strong>"${session.user.name}"</strong> <em id="date">at ${new Date().toLocaleString().split(',')[1]}</em>`,
-        extras: { 
-          headers: { "x-ably-directMessage": true, "x-ably-dmID": dmID, "x-ably-channelName": newChannelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
-        }
-      });
-      newChannel.history((err, page) => {
-        let messages = page.items.reverse();
-        setMessagesFromDB((messagesFromDB)=>{
-          if (Array.isArray(messagesFromDB)) {
-            return [...messagesFromDB, ...messages]
+      if (dmID !== '') {
+        newChannel.publish({ 
+          name: newChannelName, 
+          data: `Switched to direct message with: <strong>"${newChannelName}"</strong> and <strong>"${session.user.name}"</strong> <em id="date">at ${new Date().toLocaleString().split(',')[1]}</em>`,
+          extras: { 
+            headers: { "x-ably-directMessage": true, "x-ably-dmID": dmID, "x-ably-channelName": newChannelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
           }
         });
-      });
+        newChannel.history((err, page) => {
+          let messages = page.items.reverse();
+          setMessagesFromDB((messagesFromDB)=>{
+            if (Array.isArray(messagesFromDB)) {
+              return [...messagesFromDB, ...messages]
+            }
+          });
+        });
+      }
     } else {
       newChannel.publish({ 
         name: newChannelName, 
@@ -791,10 +801,6 @@ const AblyChatComponent = () => {
   useEffect(() => {
     messageEnd.scrollIntoView({ behaviour: "smooth" });
   });
-
-  useEffect(() => {
-    setTimeout(() => { setDirectMessagesInfoFromDB(queryDirectMsgsWithPartiQL()); }, 50);
-  }, [tempMessages.length]);
 
   return (
     // console.log('directMessageChannels: ', directMessageChannels),
