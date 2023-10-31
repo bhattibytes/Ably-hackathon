@@ -36,6 +36,14 @@ export default function Workspaces() {
   const [channels, setChannels] = useState([]);
   const { data: session } = useSession(); // Assuming you're using next-auth to get the user session
   const [channelName, setChannelName] = useState('SAMPLE');
+  const [refreshWorkspace, setRefreshWorkspace] = useState(false);
+  
+
+  const handleRefreshWorkspace = () => {
+    console.log('Refreshing workspace'); // Add this line for debugging
+    setRefreshWorkspace(!refreshWorkspace);
+  };
+  
 
   const fetchDataFromDynamoDB = async (itemId) => {
     const statement = 'SELECT * FROM "ably_kanban"';
@@ -52,6 +60,7 @@ export default function Workspaces() {
           const parsedHeaders = headers.SS;
           setState(parsedState);
           setKanbanId(id.S);
+          
           setHeaders(parsedHeaders);
           setItemCount(parseInt(itemCount.N));
           setIsLoading(false);
@@ -71,7 +80,7 @@ export default function Workspaces() {
     }
   };
   
-  
+console.log(state)
   
   
   const insertItemToDynamoDB = async () => {
@@ -139,6 +148,12 @@ export default function Workspaces() {
     }
   }
 
+  const fetchKanbanData = async () => {
+    if (router.query.id) {
+      fetchDataFromDynamoDB(router.query.id);
+    }
+  };
+
   const navigateToWorkspace = (channelName) => {
     setChannelName(channelName.toUpperCase());
     router.push(`/workspaces/${channelName}`);
@@ -151,18 +166,22 @@ export default function Workspaces() {
   
   useEffect(() => {
     fetchChannelInfo();
-  }, [session, dataFetched]);
+  }, [session, dataFetched, refreshWorkspace]);
   
   useEffect(() => {
     if (router.query.id) {
       fetchDataFromDynamoDB(router.query.id);
     }
-  }, [router.query.id]);
+  }, [router.query.id, refreshWorkspace]);
+  
+
+  
 
   return (
     <>
     <SpaceContextProvider>
     <ResponsiveAppBar/>
+    
     <div className="flex gap-4">
       <div className="p-3 w-1/6 bg-teal-100 m-4 rounded-2xl">
         <h1 className="text-xl text-teal-600 mt-20">Workspaces</h1>
@@ -184,7 +203,7 @@ export default function Workspaces() {
         ) : dataFetched ? (
           <>
             <h1 className={styles.channelHeader}>{channelName}</h1>
-            <Kanban s={state} h={headers} ic={itemCount} id={kanbanId} />
+            <Kanban s={state} h={headers} ic={itemCount} id={kanbanId} refreshWorkspace={refreshWorkspace} setRefreshWorkspace={setRefreshWorkspace}/>
           </>
         ) : (
           <div className='bg-teal-100 rounded-2xl m-6 mt-20 flex text-center justify-center items-center h-[70vh] flex-col gap-6'>
@@ -196,7 +215,6 @@ export default function Workspaces() {
       </div>
     </div>
     </SpaceContextProvider>
-    
     </>
     
   );
