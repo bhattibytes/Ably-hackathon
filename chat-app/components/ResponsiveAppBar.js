@@ -11,8 +11,11 @@ import Container from '@mui/material/Container';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import styles from '../styles/Home.module.css';
+import Logo from '../assets/logo4.png'
+import Image from 'next/image';
+import Link from 'next/link';
 
-const pages = ['Home 🏠', 'Chat 💬', 'Workspaces 🛠️', 'Profile 👤', 'Exit ⏏️'];
+const pages = [ 'Chat 💬', 'Workspaces 🛠️', 'Profile 👤', 'Exit ⏏️'];
 
 const ResponsiveAppBar = () => {
   const [anchorElNav, setAnchorElNav] = useState(null);
@@ -78,7 +81,10 @@ const ResponsiveAppBar = () => {
     className={styles.AppBar}
     sx={{ borderBottom: "1px solid white", height: "70px" }}
     >
-      <img src="https://images2.imgbox.com/51/4e/YIgLLSSc_o.png" alt="logo" className={styles.trackchat} />
+      
+      <Link href="/">
+      <Image src={Logo} alt="logo" className={styles.trackchat} width={180} />
+      </Link>
       <Container maxWidth="l">
         <Toolbar disableGutters>
           <Typography

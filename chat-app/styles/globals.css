@@ -73,8 +73,7 @@ em#date{
 }
 
 html {
-  background-image: url('../assets/bg.png');
-  background-size: 100%; 
+  background-color: #DEFAF1;
 }
 
 img#vercel {
