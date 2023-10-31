@@ -3,7 +3,8 @@ import styles from "../styles/Kaban.module.css";
 import { v4 as uuidv4 } from 'uuid';
 import AWS from 'aws-sdk';
 import ResponsiveAppBar from "./ResponsiveAppBar";
-import React, { useMemo,useState , useRef, useEffect, useContext } from "react";
+import React, { useMemo,useState , useRef, useEffect, useContext, useCallback } from "react";
+import { useChannel } from "ably/react";
 import { mockNames } from "../utils/mockNames";
 import { colours } from "../utils/helper";
 import useSpaceMembers from "../utils/useMembers";
@@ -11,8 +12,7 @@ import { MemberCursors, YourCursor } from "../utils/Cursors";
 import { SpacesContext } from "../utils/SpacesContext";
 import { LockFilledSvg } from "../utils/lockFilledSVG";
 import { useSession } from 'next-auth/react';
-import { useOnClickOutside } from "usehooks-ts";
- 
+import Ably from "ably/promises";
 
 
 AWS.config.update({
@@ -22,10 +22,11 @@ AWS.config.update({
 });
 
 
+
 const dynamodb = new AWS.DynamoDB({ convertEmptyValues: true });
 
 const mockName = () => mockNames[Math.floor(Math.random() * mockNames.length)];
-
+const realtime = new Ably.Realtime.Promise({ authUrl: '/api/createTokenRequest' });
 
 // fake data generator
 const getItems = (count, offset = 0) =>
@@ -83,7 +84,7 @@ const getListStyle = isDraggingOver => ({
   marginTop: "50px"
 });
 
-export default function Kanban({ id, s, h, ic }) {
+export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorkspace }) {
   const [state, setState] = useState([]);
   const [value, setValue] = useState("");
   const [headerValue, setHeaderValue] = useState("");
@@ -96,6 +97,11 @@ export default function Kanban({ id, s, h, ic }) {
   const [otherLocks, setOthersLocks] = useState([]);
   const name = useMemo(mockName, []);
   const { data: session, status } = useSession();
+  const [update, setUpdate] = useState("1");
+  const previousStateRef = useRef(null);
+
+  
+  
   /** 💡 Select a color to assign randomly to a new user that enters the space💡 */
   const userColors = useMemo(
     () => colours[Math.floor(Math.random() * colours.length)],
@@ -105,9 +111,14 @@ export default function Kanban({ id, s, h, ic }) {
   /** 💡 Get a handle on a space instance 💡 */
   const space = useContext(SpacesContext);
 
+  
+
   useEffect(() => {
+    
     const name = session?.user.name;
     space?.enter({ name, userColors });
+
+    if (!space) return;
 
     const my = space?.locks.getSelf();
       my.then((array) => {
@@ -145,9 +156,38 @@ export default function Kanban({ id, s, h, ic }) {
 
 
   const { self, otherMembers } = useSpaceMembers(space);
+  const channelName = `kanban-${id}`;
+  const channel = realtime.channels.get(channelName);
 
+  useEffect(() => {
+    channel.subscribe("update", (message) => {
+      console.log("message subscripbing", message)
+      const nextValue = message.data;
+      setState(JSON.parse(nextValue)); 
+      handleRefresh();
+      
+    });
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [channel]);
+
+  const handleRefresh = () => {
+    setRefreshWorkspace(!refreshWorkspace);
+  
+    console.log("refr");
+  };
+
+  // useEffect(() => {
+  //   handleRefresh();
+  // }, [update]);
+  
 
   const liveCursors = useRef(null);
+
+
+  
 
 
   
@@ -156,43 +196,50 @@ export default function Kanban({ id, s, h, ic }) {
   }, [state, headers, itemCount]); 
 
 
+
   const updateItemToDynamoDB = (itemId) => {
     if (itemCount === null) {
       return;
     }
-  try {
-    
 
-    const params = {
-      TableName: 'ably_kanban',
-      Key: {
-        id: { S: itemId }, 
-      },
-      UpdateExpression: 'SET #state = :newState, #headers = :newHeaders, #itemCount = :newItemCount',
-      ExpressionAttributeNames: {
-        '#state': 'state',
-        '#headers': 'headers',
-        '#itemCount': 'itemCount',
-      },
-      ExpressionAttributeValues: {
-        ':newState': { S: JSON.stringify(state) }, 
-        ':newHeaders': { SS: headers }, 
-        ':newItemCount': { N: itemCount.toString() }, 
-      },
-      ReturnValues: 'ALL_NEW', 
-    };
+    try {
+      const params = {
+        TableName: "ably_kanban",
+        Key: {
+          id: { S: itemId },
+        },
+        UpdateExpression: "SET #state = :newState, #headers = :newHeaders, #itemCount = :newItemCount",
+        ExpressionAttributeNames: {
+          "#state": "state",
+          "#headers": "headers",
+          "#itemCount": "itemCount",
+        },
+        ExpressionAttributeValues: {
+          ":newState": { S: JSON.stringify(state) },
+          ":newHeaders": { SS: headers },
+          ":newItemCount": { N: itemCount.toString() },
+        },
+        ReturnValues: "ALL_NEW",
+      };
 
-    dynamodb.updateItem(params, function (err, data) {
-      if (err) {
-        console.error('Error updating item in DynamoDB:', err);
-      } else {
-        console.log('Item updated in DynamoDB:', data.Attributes);
-      }
-    });
-  } catch (error) {
-    console.error('Error preparing item for DynamoDB update:', error);
-  }
-};
+      dynamodb.updateItem(params, function (err, data) {
+        if (err) {
+          console.error("Error updating item in DynamoDB:", err);
+        } else {
+          console.log("Item updated in DynamoDB:", data.Attributes);
+          const newStateString = JSON.stringify(state);
+
+          if (newStateString !== previousStateRef.current) {
+            // Compare the new state with the previous state
+            channel.publish("update", newStateString);
+            previousStateRef.current = newStateString; // Update the previous state using the ref
+          }
+        }
+      });
+    } catch (error) {
+      console.error("Error preparing item for DynamoDB update:", error);
+    }
+  };
 
   function onDragEnd(result) {
     const { source, destination } = result;
@@ -391,16 +438,19 @@ export default function Kanban({ id, s, h, ic }) {
     }
   };
   
-  // useEffect(() => {
-  //   setState([getItems(10), getItems(10, 10), getItems(10, 20), getItems(10, 30)]);
-  //   setHeaders(["Click to Edit 1", "Click to Edit 2", "Click to Edit 3", "Click to Edit 4"]);
-  // }, []);
   
   useEffect(() => {
     setState(s);
     setHeaders(h);
     setItemCount(ic);
   }, []);
+
+  useEffect(() => {
+    setState(s);
+    setHeaders(h);
+    setItemCount(ic);
+  }, [s, h, ic]);
+  
 
   return (
     <>
@@ -647,7 +697,8 @@ export default function Kanban({ id, s, h, ic }) {
         </div>
       </div>
     </div>
-      
+    
+      <button onClick={handleRefresh}>HEREE</button>
     </>
   );
 }
