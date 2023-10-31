@@ -193,6 +193,7 @@ const AblyChatComponent = () => {
                 console.log('Error', err);
               } else {
                 console.log('Message was added to exsiting converation: ', data);
+                overlay3.style.display = 'none';
                 queryDirectMsgsWithPartiQL();
                 return;
               }
@@ -232,6 +233,7 @@ const AblyChatComponent = () => {
           console.log('Error', err);
         } else {
           console.log('New Direct Message was created in IF: ', data);
+          overlay3.style.display = 'none';
           queryDirectMsgsWithPartiQL();
           return
         }
@@ -256,6 +258,7 @@ const AblyChatComponent = () => {
           console.log('Error', err);
         } else {
           console.log('New Direct Message was created in ELSE IF: ', data);
+          overlay3.style.display = 'none';
           queryDirectMsgsWithPartiQL();
           return;
         }
