@@ -193,7 +193,7 @@ export default function Workspaces() {
           <p>Loading...</p>
         ) : dataFetched ? (
           <>
-            <h1 className="text-center uppercase font-bold text-4xl underline text-track-blue ">{channelName}</h1>
+            <h1 className="text-center absolute pl-14 left-1/2 uppercase font-bold text-4xl underline text-track-blue ">{channelName}</h1>
             <Kanban s={state} h={headers} ic={itemCount} id={kanbanId} refreshWorkspace={refreshWorkspace} setRefreshWorkspace={setRefreshWorkspace}/>
           </>
         ) : (
