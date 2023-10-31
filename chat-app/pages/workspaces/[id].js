@@ -40,7 +40,6 @@ export default function Workspaces() {
   
 
   const handleRefreshWorkspace = () => {
-    console.log('Refreshing workspace'); // Add this line for debugging
     setRefreshWorkspace(!refreshWorkspace);
   };
   
@@ -54,7 +53,6 @@ export default function Workspaces() {
         const foundItem = kanbanData.Items.find(item => item.channelName && item.channelName.S === itemId);
         
         if (foundItem) {
-          console.log('Item fetched--', foundItem);
           const { state, headers, itemCount, id } = foundItem;
           const parsedState = JSON.parse(state.S);
           const parsedHeaders = headers.SS;
@@ -80,8 +78,6 @@ export default function Workspaces() {
     }
   };
   
-console.log(state)
-  
   
   const insertItemToDynamoDB = async () => {
     
@@ -93,11 +89,6 @@ console.log(state)
       const initialState = [getItems(5), getItems(5, 5), getItems(5, 10), getItems(5, 15)];
       const initialHeaders = ['Backlog', 'To Do', 'In Progress', 'Done'];
       const count = 20;
-
-      // console.log(channelName.S);
-      // console.log(initialState);
-      // console.log(initialHeaders);
-      // console.log(count);
   
       try {
         const params = {
@@ -183,32 +174,32 @@ console.log(state)
     <ResponsiveAppBar/>
     
     <div className="flex gap-4">
-      <div className="p-3 w-1/6 bg-teal-100 m-4 rounded-2xl">
-        <h1 className="text-xl text-teal-600 mt-20">Workspaces</h1>
+      <div className="p-3 w-1/6 bg-track-blue my-4 rounded-2xl h-screen">
+        <h1 className=" text-white font-bold text-2xl mt-20 text-center mb-2 underline">WORKSPACES</h1>
         <ul>
           {channels.map(channel => (
             <li
             key={channel.channelName.S}
-            className='bg-track-blue cursor-pointer hover:underline text-white font-medium mb-2 p-1 pl-3 rounded-xl'
+            className='bg-track-blue cursor-pointer hover:underline text-white mb-2  pl-3 rounded-xl text-xl font-semibold'
             onClick={() => navigateToWorkspace(channel.channelName.S)} // Wrap in a function
           >
-            {channel.channelName.S}
+           <span className='text-track-green mr-2'>#</span> {channel.channelName.S}
           </li>
           ))}
         </ul>
       </div>
-      <div className="w-5/6">
+      <div className="w-5/6 mt-24">
         {isLoading ? (
           <p>Loading...</p>
         ) : dataFetched ? (
           <>
-            <h1 className={styles.channelHeader}>{channelName}</h1>
+            <h1 className="text-center uppercase font-bold text-4xl underline text-track-blue ">{channelName}</h1>
             <Kanban s={state} h={headers} ic={itemCount} id={kanbanId} refreshWorkspace={refreshWorkspace} setRefreshWorkspace={setRefreshWorkspace}/>
           </>
         ) : (
-          <div className='bg-teal-100 rounded-2xl m-6 mt-20 flex text-center justify-center items-center h-[70vh] flex-col gap-6'>
-            <p className='text-2xl'>Create a kanban board for "<span className='font-bold'>{router.query.id}</span>  "</p>
-            <button onClick={insertItemToDynamoDB} className='text-xl font-medium hover:underline cursor-pointer rounded-xl p-2 bg-track-blue text-white'>Create</button>
+          <div className=' rounded-2xl m-6 mt-20 flex text-center justify-center items-center h-[70vh] flex-col gap-6'>
+            <p className='text-4xl'>Create a kanban board for "<span className='font-bold'>{router.query.id}</span>  "</p>
+            <button onClick={insertItemToDynamoDB} className='text-3xl font-medium hover:underline cursor-pointer rounded-2xl px-4 py-2 pb-3  bg-track-blue text-white'>Create</button>
 
           </div>
         )}

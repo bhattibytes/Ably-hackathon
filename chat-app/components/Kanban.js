@@ -1,10 +1,8 @@
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import styles from "../styles/Kaban.module.css";
-import { v4 as uuidv4 } from 'uuid';
 import AWS from 'aws-sdk';
 import ResponsiveAppBar from "./ResponsiveAppBar";
-import React, { useMemo,useState , useRef, useEffect, useContext, useCallback } from "react";
-import { useChannel } from "ably/react";
+import React, { useMemo,useState , useRef, useEffect, useContext } from "react";
 import { mockNames } from "../utils/mockNames";
 import { colours } from "../utils/helper";
 import useSpaceMembers from "../utils/useMembers";
@@ -20,7 +18,6 @@ AWS.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
 });
-
 
 
 const dynamodb = new AWS.DynamoDB({ convertEmptyValues: true });
@@ -91,27 +88,20 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
   const [headers, setHeaders] = useState([]);
   const [task , setTask] = useState('');
   const [itemCount, setItemCount] = useState(null);
-  const refLock = useRef(null);
   const [lockedIdByYou, setLockedIdByYou] = useState(null);
   const [myLock, setMyLock] = useState([]);
   const [otherLocks, setOthersLocks] = useState([]);
-  const name = useMemo(mockName, []);
   const { data: session, status } = useSession();
-  const [update, setUpdate] = useState("1");
   const previousStateRef = useRef(null);
 
   
   
-  /** 💡 Select a color to assign randomly to a new user that enters the space💡 */
   const userColors = useMemo(
     () => colours[Math.floor(Math.random() * colours.length)],
     []
   );
 
-  /** 💡 Get a handle on a space instance 💡 */
   const space = useContext(SpacesContext);
-
-  
 
   useEffect(() => {
     
@@ -161,7 +151,6 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
 
   useEffect(() => {
     channel.subscribe("update", (message) => {
-      console.log("message subscripbing", message)
       const nextValue = message.data;
       setState(JSON.parse(nextValue)); 
       handleRefresh();
@@ -176,20 +165,9 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
   const handleRefresh = () => {
     setRefreshWorkspace(!refreshWorkspace);
   
-    console.log("refr");
   };
 
-  // useEffect(() => {
-  //   handleRefresh();
-  // }, [update]);
-  
-
   const liveCursors = useRef(null);
-
-
-  
-
-
   
   useEffect(() => {
       updateItemToDynamoDB(id);
@@ -230,9 +208,9 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
           const newStateString = JSON.stringify(state);
 
           if (newStateString !== previousStateRef.current) {
-            // Compare the new state with the previous state
+
             channel.publish("update", newStateString);
-            previousStateRef.current = newStateString; // Update the previous state using the ref
+            previousStateRef.current = newStateString; 
           }
         }
       });
@@ -330,41 +308,21 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
   }
   }
 
-  const handleClickOutside = (e) => {
-
-  
-    if (lockedIdByYou){
-      space?.locks.release(lockedIdByYou);
-      console.log("released lock by id",lockedIdByYou);
-      setLockedIdByYou(null);
-      const closeInputs = document.querySelectorAll("input[id$=input]");
-    closeInputs.forEach((input) => {
-      if (input.style.display === "") {
-        input.style.display = "none";
-      }
-    });
-    }
-  };
-
-  // useOnClickOutside(refLock, handleClickOutside);
 
   const handleClickEditTaskTitle = (e) => {
     try {
-      // Check if you have already acquired a lock for the item
       if (lockedIdByYou) {
-        // If so, release the existing lock
+
         space?.locks.release(lockedIdByYou);
         console.log("Released lock by id", lockedIdByYou);
         setLockedIdByYou(null);
       }
   
-      // Now, acquire the lock for the new item
       space.locks.acquire(e.target.id);
       setLockedIdByYou(e.target.id);
       console.log("Acquired lock by id", e.target.id);
     } catch (error) {
       console.error("Failed to acquire or release the lock:", error);
-      // Handle the error, e.g., displaying an error message to the user.
     }
 
     const closeInputs = document.querySelectorAll("input[id$=input]");
@@ -472,7 +430,7 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
           selfConnectionId={self?.connectionId}
         />
         <ResponsiveAppBar />
-      <div className="pt-32">
+      <div className="mt-32">
         <input 
           className={styles.inputNewGroup}
           type="text" 
@@ -555,7 +513,6 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
 
                         if (matchingLock) {
                           borderColor = matchingLock.member.profileData.userColors.cursorColor;
-                          console.log("other border color", borderColor);
                           memberName1 = matchingLock.member.profileData.name;
                         }
 
@@ -697,8 +654,6 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
         </div>
       </div>
     </div>
-    
-      <button onClick={handleRefresh}>HEREE</button>
     </>
   );
 }

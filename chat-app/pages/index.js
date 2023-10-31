@@ -5,6 +5,11 @@ import ResponsiveAppBar from '../components/ResponsiveAppBar.js';
 import styles from '../styles/Home.module.css';
 import { useSession } from 'next-auth/react';
 import AccessDenied from '../components/AccessDenied.js';
+import Image from 'next/image.js';
+import User from '../assets/user.png'
+import Logout from '../assets/log-out.png'
+import chat from '../assets/chat.png';
+import project from '../assets/project.png';
 
 export default function Home() {
   const { data: session, status } = useSession()
@@ -21,31 +26,36 @@ export default function Home() {
           <link rel="icon" href="https://static.ably.dev/motif-red.svg?nextjs-vercel" type="image/svg+xml" />
         </Head>
         <ResponsiveAppBar />
-        <center><h1 className={styles.headlineTitle}>IMAGINE A PLACE...</h1></center>
-        <center><p className={styles.summary}>...where you can seamlessly engage in real-time conversations with fellow users while simultaneously monitoring a dynamic project management dashboard. This multifunctional app offers the perfect blend of social interaction and efficient project oversight, enhancing collaboration and productivity</p></center>
-        <center><p className={styles.summary}>DEMO - This app is in development - DEMO </p></center>
+        <div className=''>
+
+        </div>
+        <Image className="absolute bottom-20" src={chat} width={300}/>
+        <Image className="absolute right-10 top-20" src={project} width={300}/>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center w-[44%]">
+        <h1 className="font-semibold text-4xl text-track-blue mb-4">Connect, Collaborate, and Conquer</h1>
+        <p className="text-lg text-justify font-base text-slate-600"><span className='text-track-blue font-semibold'>Instant Connection:</span> Connect instantly with your team through real-time conversations, channel creation, and private messaging. Stay in sync and foster collaborative communication effortlessly.<br/> <span className='text-track-blue font-semibold'>Effortless Collaboration:</span> TrackChat's dynamic project management dashboard simplifies project oversight. With live cursors and a locking mechanism, your team collaborates efficiently and ensures everyone works together seamlessly for successful project outcomes.</p>
+        </div>
+        <center></center>
+        <center></center>
         
-        <img className={styles.coverImg1} src={'https://images2.imgbox.com/9b/20/aEhBSWpJ_o.png'} width={600}/>
-        <img className={styles.coverImg2} src={'https://images2.imgbox.com/d6/99/YXaCmfHq_o.png'} width={1000}/>
+        
+        <div className=''>
         <main className={styles.main}>
           <div className={styles.welcome}>
             <img className={styles.welcomeImg} src={session.user.image} width={75} height={75}/>
-            &nbsp;&nbsp;<h1>Welcome {session.user.name.split(' ')[0]} &nbsp;
+            &nbsp;&nbsp;<h1 className='text-xl text-white'>Welcome, <span className='font-semibold'>{session.user.name.split(' ')[0]}</span>   &nbsp;
               <a className={styles.links} href='/profile'>Profile |</a>
-              <a className={styles.links} href='/api/auth/signout'>&nbsp;Sign Out</a>
+              <a className={styles.links} href='/api/auth/signout'>&nbsp;Signout</a>
             </h1>
           </div>
         </main>
 
         <Footer />
-        
-        <style jsx>{`
-          ...       
-        `}</style>
 
-        <style jsx global>{`
-          ...        
-        `}</style>
+        </div>
+        
+        
+        
       </div>
     )
   }

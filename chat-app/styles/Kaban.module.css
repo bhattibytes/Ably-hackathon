@@ -4,10 +4,7 @@
 }
 
 .kabanMain {
-  position: absolute;
-  top: 110px;
-  left: 80px;
-  z-index: 10;
+ 
 }
 
 .homeLink {
@@ -23,7 +20,6 @@
 
 .kanbanBoard {
   display: flex; 
-  width: 1400px;
   border: 5px solid #defaf1;
   border-radius: 10px;
   margin-top: 2px;
@@ -35,11 +31,14 @@
   line-height: 1.5;
   border-radius: 5px;
   margin-bottom: 2px;
+  padding:2px 4px;
+  border: 1px solid #6e07f3;
 } 
 
 .button {
   border-radius: 5px;
   color: white;
+  padding:6px 4px;
   font-size: 1.1em;
   background: linear-gradient(to right, #6e07f3, #5BE9B9);
   margin-left: 5px;
