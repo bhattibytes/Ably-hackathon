@@ -58,7 +58,7 @@
   cursor: pointer;
   background-color: white;
   color: black;
-  border-radius: 15px;
+  border-radius: 10px;
   padding: 5.5px;
 }
 
@@ -163,6 +163,7 @@
   display: grid;
   align-items: center;
   justify-content: left;
+  margin-bottom: 5px;
 }
 
 .inviteMemberContainer {
@@ -220,14 +221,15 @@
   grid-column: 2;
   margin-left: 20px;
   font-size: 18px;
-  color: lightgray;
+  color: white;
 }
 
 .chatUserContainer {
   position: absolute;
+  background-color: #6e07f3;
   right: 0;
   top: 70px;
-  border: 1px solid #eee;
+  border: 1px solid black;
   height: 160px;
   width: 250px;
   overflow-y: scroll;
@@ -243,12 +245,11 @@
 }
 
 .chatTitle {
-  /* position: absolute; */
   font-size: 24px;
-  color:white;
+  color: white;
   font-weight: bold;
   margin-left: 5px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid white;
   margin-top: 0;
 }
 
@@ -394,3 +395,39 @@
   text-decoration: underline;
   margin-top: 150px;
 }
+
+@media (max-height: 910px) {
+  .chatUserContainer {
+    height: 120px;
+   } 
+}
+
+@media (max-height: 790px) {
+  .chatUserContainer {
+    height: 120px;
+   }
+}
+
+@media (max-height: 830px ) {
+  .chatHolder {
+    height: 350px;
+  }
+
+  .chatUserContainer {
+    height: 180px;
+   } 
+}
+
+@media (max-height: 730px ) {
+  .chatHolder {
+    height: 250px;
+  }
+
+  .chatUserContainer {
+   
+  } 
+}
+
+.chatHolder {}
+
+.chatUserContainer {}
