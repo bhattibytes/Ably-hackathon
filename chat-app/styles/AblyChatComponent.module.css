@@ -220,14 +220,14 @@
   grid-column: 2;
   margin-left: 20px;
   font-size: 18px;
-  color: lightgray;
+  color: #6e07f3;
 }
 
 .chatUserContainer {
   position: absolute;
   right: 0;
   top: 70px;
-  border: 1px solid #eee;
+  border: 1px solid black;
   height: 160px;
   width: 250px;
   overflow-y: scroll;
@@ -243,12 +243,11 @@
 }
 
 .chatTitle {
-  /* position: absolute; */
   font-size: 24px;
-  color:white;
+  color:#6e07f3;
   font-weight: bold;
   margin-left: 5px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #6e07f3;
   margin-top: 0;
 }
 
@@ -394,3 +393,39 @@
   text-decoration: underline;
   margin-top: 150px;
 }
+
+@media (max-height: 910px) {
+  .chatUserContainer {
+    height: 120px;
+   } 
+}
+
+@media (max-height: 790px) {
+  .chatUserContainer {
+    height: 120px;
+   }
+}
+
+@media (max-height: 830px ) {
+  .chatHolder {
+    height: 350px;
+  }
+
+  .chatUserContainer {
+    height: 180px;
+   } 
+}
+
+@media (max-height: 730px ) {
+  .chatHolder {
+    height: 250px;
+  }
+
+  .chatUserContainer {
+   
+  } 
+}
+
+.chatHolder {}
+
+.chatUserContainer {}
