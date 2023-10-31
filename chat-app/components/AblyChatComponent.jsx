@@ -167,30 +167,49 @@ const AblyChatComponent = () => {
   }
 
   const saveDirectMessageToDB = async (name, email, image, msg) => {
-    Array.isArray(directMessagesInfoFromDB) && directMessagesInfoFromDB.forEach((message) => {
-      if (message.memberEmails.SS.includes(email)) {
-        dynamodb.updateItem({
-          TableName: 'ably_direct_messages',
-          Key: {
-            'id': { S: message.id.S },
-          },
-          UpdateExpression: 'SET messages = list_append(messages, :messages), messageAuthors = list_append(messageAuthors, :messageAuthors), messageAuthorImgs = list_append(messageAuthorImgs, :messageAuthorImgs)',
-          ExpressionAttributeValues: {
-            ':messages': { L: [{ S: msg }] },
-            ':messageAuthors': { L: [{ S: session.user.name }] },
-            ':messageAuthorImgs': { L: [{ S: session.user.image }] },
-          },
-          ReturnValues: 'ALL_NEW',
-        }, function(err, data) {
-          if (err) {
-            console.log('Error', err);
-          } else {
-            console.log('Success MSG: ', data);
-          }
+    let foundInDB = false;
+    const statement = 'SELECT * FROM "ably_direct_messages"';
+    await dynamodb.executeStatement({Statement: statement}).promise().then((data) => {
+      if (data.Items.length) {
+        Array.isArray(data.Items) && data.Items.forEach((message) => {
+          if (message.memberEmails.SS.includes(email) && message.memberEmails.SS.includes(message.ownerEmail.S) && message.messages.L.length === 1) {
+            foundInDB = true;
+            const foundMsg = `Joined Direct Message with <strong>"${message.ownerName.S}"</strong><em id="date"> at ${new Date().toLocaleString().split(',')[1]}</em>`;
+
+            dynamodb.updateItem({
+              TableName: 'ably_direct_messages',
+              Key: {
+                'id': { S: message.id.S },
+              },
+              UpdateExpression: 'SET messages = list_append(messages, :messages), messageAuthors = list_append(messageAuthors, :messageAuthors), messageAuthorImgs = list_append(messageAuthorImgs, :messageAuthorImgs)',
+              ExpressionAttributeValues: {
+                ':messages': { L: [{ S: foundMsg }] },
+                ':messageAuthors': { L: [{ S: session.user.name }] },
+                ':messageAuthorImgs': { L: [{ S: session.user.image }] },
+              },
+              ReturnValues: 'ALL_NEW',
+            }, function(err, data) {
+              if (err) {
+                console.log('Error', err);
+              } else {
+                console.log('Message was added to exsiting converation: ', data);
+                queryDirectMsgsWithPartiQL();
+                return;
+              }
+            });
+          } 
         });
-      } 
+      }
+    }).catch((error) => {
+      console.log('error: ', error);
     });
-    if ( typeof directMessageChannels === 'object' && 
+     
+    if (foundInDB) {
+      return;
+    }
+   
+    if ( foundInDB === false &&
+    typeof directMessageChannels === 'object' && 
     typeof directMessageChannels.then === 'function' && 
     directMessageChannels.then((data) => data === undefined 
     )) {
@@ -212,10 +231,12 @@ const AblyChatComponent = () => {
         if (err) {
           console.log('Error', err);
         } else {
-          console.log('Success MSG: ', data);
+          console.log('New Direct Message was created in IF: ', data);
+          queryDirectMsgsWithPartiQL();
+          return
         }
       });
-    } else if ( Array.isArray(directMessageChannels) && !directMessageChannels.includes(name) ) {
+    } else if ( foundInDB === false && Array.isArray(directMessageChannels) && !directMessageChannels.includes(name) ) {
       dynamodb.putItem({
         TableName: 'ably_direct_messages',
         Item: {
@@ -234,7 +255,9 @@ const AblyChatComponent = () => {
         if (err) {
           console.log('Error', err);
         } else {
-          console.log('Success MSG: ', data);
+          console.log('New Direct Message was created in ELSE IF: ', data);
+          queryDirectMsgsWithPartiQL();
+          return;
         }
       });
     }
