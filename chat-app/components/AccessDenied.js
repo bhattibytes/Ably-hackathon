@@ -18,15 +18,15 @@ export default function AccessDenied () {
            e.preventDefault()
            signIn()
         }}>
-          <Image className={styles.logInImg} alt={"google"} src={google} width={250}/>
+          <Image className={styles.logInImg} alt={"google"} src={google} width={350}/>
           <br/>
-          <Image className={styles.logInImg} alt={"twitter"} src={twitter} width={250}/>
+          <Image className={styles.logInImg} alt={"twitter"} src={twitter} width={350}/>
           <br/>
-          <Image className={styles.logInImg} alt={"github"} src={github} width={250}/>
+          <Image className={styles.logInImg} alt={"github"} src={github} width={350}/>
         </a>
       </div>
-        <Image className="absolute top-20" src={chat} width={450}/>
-        <Image className="absolute right-10 top-32" src={project} width={400}/>
+        <Image className="absolute top-32" src={chat} width={650}/>
+        <Image className="absolute right-5 top-20" src={project} width={700}/>
     </div>
   )
 }

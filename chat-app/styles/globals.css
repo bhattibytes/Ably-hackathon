@@ -2,6 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+*::-webkit-scrollbar {
+  width: 0.7rem;
+}
+ 
+*::-webkit-scrollbar-track {
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+ 
+*::-webkit-scrollbar-thumb {
+  background-color: rgba(31, 6, 44, 0.4);
+  border-radius: 20px;
+
+  outline: 1px solid slategrey;
+}
+
 .live-cursors-container {
   @apply w-full flex justify-center items-center relative;
   

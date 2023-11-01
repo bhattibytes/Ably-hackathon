@@ -29,11 +29,11 @@ export default function Home() {
         <div className=''>
 
         </div>
-        <Image className="absolute bottom-20" src={chat} width={300}/>
-        <Image className="absolute right-10 top-20" src={project} width={300}/>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center w-[44%]">
-        <h1 className="font-semibold text-4xl text-track-blue mb-4">Connect, Collaborate, and Conquer</h1>
-        <p className="text-lg text-justify font-base text-slate-600"><span className='text-track-blue font-semibold'>Instant Connection:</span> Connect instantly with your team through real-time conversations, channel creation, and private messaging. Stay in sync and foster collaborative communication effortlessly.<br/> <span className='text-track-blue font-semibold'>Effortless Collaboration:</span> TrackChat's dynamic project management dashboard simplifies project oversight. With live cursors and a locking mechanism, your team collaborates efficiently and ensures everyone works together seamlessly for successful project outcomes.</p>
+        <Image className="absolute bottom-32" src={chat} width={450}/>
+        <Image className="absolute right-10 top-20" src={project} width={450}/>
+        <div className="absolute top-[24rem] left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center w-[44%]">
+        <h1 className="font-semibold text-[3rem] text-track-blue mb-4">Connect, Collaborate, and Conquer</h1>
+        <p className="text-[1.5rem] text-justify font-base text-slate-600"><span className='text-track-blue font-semibold'>Instant Connection:</span> Connect instantly with your team through real-time conversations, channel creation, and private messaging. Stay in sync and foster collaborative communication effortlessly.<br/> <span className='text-track-blue font-semibold'>Effortless Collaboration:</span> TrackChat's dynamic project management dashboard simplifies project oversight. With live cursors and a locking mechanism, your team collaborates efficiently and ensures everyone works together seamlessly for successful project outcomes.</p>
         </div>
         <center></center>
         <center></center>

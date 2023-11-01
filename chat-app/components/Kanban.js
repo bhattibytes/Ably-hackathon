@@ -62,7 +62,6 @@ const getItemStyle = (isDragging, draggableStyle) => ({
   // some basic styles to make the items look a bit nicer
   userSelect: "none",
   padding: grid * 2,
-  margin: `0 0 ${grid}px 0`,
   borderRadius: "5px",
   boxShadow: `inset 0 0 10px`,
 
@@ -75,11 +74,17 @@ const getItemStyle = (isDragging, draggableStyle) => ({
 const getListStyle = isDraggingOver => ({
   background: isDraggingOver ? "#6e07f3" : "#defaf1",
   padding: grid,
-  width: 150,
+  width: 220,
+  borderRadius: "5px",
   height: 620,
-  overflow: "scroll",
-  marginTop: "50px"
+  overflowY: "scroll",
+  overflowX: "hidden",
+  marginTop: "10px",
+  marginLeft:"15px",
+  padding: "10px 15px",
+  boxShadow: "rgba(6, 24, 44, 0.4) 0px 0px 0px 2px, rgba(6, 24, 44, 0.65) 0px 4px 6px -1px, rgba(255, 255, 255, 0.08) 0px 1px 0px inset"
 });
+
 
 export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorkspace }) {
   const [state, setState] = useState([]);
@@ -430,7 +435,8 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
           selfConnectionId={self?.connectionId}
         />
         <ResponsiveAppBar />
-      <div className="mt-32">
+      <div className="text-center">
+        
         <input 
           className={styles.inputNewGroup}
           type="text" 
@@ -592,7 +598,7 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
                                     {...provided.dragHandleProps}
                                     style={getItemStyle(snapshot.isDragging, provided.draggableProps.style)}
                                   >
-                                    <div className={styles.taskCard}>
+                                    <div className={styles.taskCard} >
                                       <span className={styles.taskTitle} id={`${item.id}=task`}>{item.content}</span>
                                       <button
                                         type="button"
@@ -600,7 +606,7 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
                                         onClick={(e) => { handleClickEditTaskTitle(e) }}
                                         id={item.id}
                                       >
-                                        edit | save
+                                        Edit | Save
                                       </button>
                                       <button className={styles.taskButtonDelete} type="button" onClick={() => {
                                         var txt = "Are you sure you want to delete this task?";
@@ -622,7 +628,7 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
                                           })
                                         );
                                       }}>
-                                        delete
+                                        Delete
                                       </button>
                                       <input
                                         type="text"
@@ -635,7 +641,7 @@ export default function Kanban({ id, s, h, ic, refreshWorkspace, setRefreshWorks
                                         value={task}
                                         onChange={(e) => { setTask(e.target.value) }}
                                       />
-                                      <span className={styles.id}>id: {item.id.split('-')[1]}</span>
+                                      <span className={styles.id}>ID: {item.id.split('-')[1]}</span>
                                     </div>
                                   </div>
                                 </div>
