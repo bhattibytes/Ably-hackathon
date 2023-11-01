@@ -101,13 +101,29 @@ const AblyChatComponent = () => {
   }
 
   const [channel, realtime] = useChannel(channelName, async (message) => {
+    if (message.extras.headers['x-ably-directMessage'] === true) {
+      let directMessagesInfoFromDBCall = [];
+      setTimeout(async() => { directMessagesInfoFromDBCall = await queryDirectMsgsWithPartiQL(); }, 10);
+      return new Promise((resolve, reject) => {
+        resolve(directMessagesInfoFromDBCall);
+      }
+      ).catch((error) => {
+        console.log('error: ', error);
+        reject(error);
+      }).then(() => {
+        setDirectMessagesInfoFromDB((directMessagesInfoFromDB)=> { 
+          if (Array.isArray(directMessagesInfoFromDB)) {
+            return [...directMessagesInfoFromDB, ...directMessagesInfoFromDBCall]
+          } else {
+            return [...directMessagesInfoFromDBCall]
+          }
+        });
+      });
+    } else {
     let messagesFromDBCall = [];
-    let directMessagesInfoFromDBCall = [];
     setTimeout(async() => { messagesFromDBCall = await queryUsersWithPartiQL(); }, 10);
-    setTimeout(async() => { directMessagesInfoFromDBCall = await queryDirectMsgsWithPartiQL(); }, 10);
     return new Promise((resolve, reject) => {
       resolve(messagesFromDBCall);
-      resolve(directMessagesInfoFromDBCall);
     }).catch((error) => {
       console.log('error: ', error);  
       reject(error);
@@ -119,16 +135,10 @@ const AblyChatComponent = () => {
             return [...messagesFromDBCall]
           }
         });
-        setDirectMessagesInfoFromDB((directMessagesInfoFromDB)=> { 
-          if (Array.isArray(directMessagesInfoFromDB)) {
-            return [...directMessagesInfoFromDB, ...directMessagesInfoFromDBCall]
-          } else {
-            return [...directMessagesInfoFromDBCall]
-          }
-        });
       });
     }
-  );
+  });
+
 
   const saveUserToDB = async () => {
     let userInDB = false;
@@ -527,24 +537,20 @@ const AblyChatComponent = () => {
         }
       });
       if (dmID !== '') {
-      let passedDM = dmID;
-      dmID = '';
       await channel.publish({ 
         name: channelName, 
         data: `<strong>${messageText.slice(3, -4) + '</strong>' + '<em id="date">at '+ new Date().toLocaleString().split(',')[1]}</em>`,
         extras: { 
-          headers: { "x-ably-directMessage": true, "x-ably-dmID": passedDM, "x-ably-channelName": channelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
+          headers: { "x-ably-directMessage": true, "x-ably-dmID": dmID, "x-ably-channelName": channelName, "x-ably-author": session.user.name, "x-ably-authorEmail": session.user.email, "x-ably-authorImage": session.user.image }
         }
       }); 
       setTimeout(() => { setMessagesFromDB(queryUsersWithPartiQL()); }, 50);
-      
-      realtime.channels.get(channelName).history((err, page) => {
-        let messages = page.items.reverse();
 
-        setTempMessages([...messages]);
-        setDirectMessagesInfoFromDB((directMessagesInfoFromDB)=> { 
-          if (Array.isArray(directMessagesInfoFromDB)) {
-            [...directMessagesInfoFromDB]
+      channel.history((err, page) => {
+        let messages = page.items.reverse();
+        setMessagesFromDB((messagesFromDB)=>{
+          if (Array.isArray(messagesFromDB)) {
+            return [...messagesFromDB, ...messages]
           }
         });
       });
